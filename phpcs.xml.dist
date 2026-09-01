@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<ruleset name="BlueWorx Labs Deck Builder">
+	<description>
+		WordPress Coding Standards for this plugin's own PHP. Vendored and
+		generated trees are out of scope: we do not own their style, and editing
+		them to satisfy a sniff is how a vendored library drifts from upstream.
+	</description>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+	<arg name="parallel" value="4"/>
+
+	<!-- The plugin's own code, and only that. -->
+	<file>blueworx-labs-deck-builder.php</file>
+	<file>includes</file>
+	<file>uninstall.php</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/plugin-update-checker/*</exclude-pattern>
+	<exclude-pattern>*/.wp-test/*</exclude-pattern>
+	<exclude-pattern>*/.claude/*</exclude-pattern>
+
+	<rule ref="WordPress"/>
+
+	<config name="minimum_wp_version" value="6.5"/>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="blueworx-labs-deck-builder"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="blueworx_deck_builder"/>
+				<element value="BLUEWORX_DECK_BUILDER"/>
+				<element value="Blueworx_Deck_Builder"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

@@ -1,0 +1,22 @@
+node_modules/
+package-lock.json
+/vendor/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.phpunit.result.cache
+
+# Disposable local WordPress the test harness provisions. A full WordPress tree.
+.wp-test/
+
+# Local verification artifacts.
+.playwright-mcp/
+/*.png
+
+# The deployable artifact is built to the PARENT folder, never into the repo —
+# CI fails a repo holding more than one <slug> zip.
+*.zip
+
+# Signed-in browser state the suite saves between specs.
+tests/.auth-state.json

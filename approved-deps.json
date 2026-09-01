@@ -1,0 +1,6 @@
+{
+  "dependencies": {},
+  "devDependencies": {
+    "@playwright/test": "Playwright is the end-to-end test runner the shared CI guardrails run."
+  }
+}
