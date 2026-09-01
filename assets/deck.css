@@ -1,0 +1,485 @@
+/*
+ * The client deck's own stylesheet.
+ *
+ * This is the whole design of the public presentation, and it is deliberately
+ * the only stylesheet on the page. The deck is served as its own document
+ * rather than through the theme, so nothing here has to fight a theme's
+ * cascade and nothing here can leak into one — the two problems this file
+ * exists to avoid are the same problem from opposite ends.
+ *
+ * Sizes inside a slide are literal pixels on purpose: a section is authored on
+ * a 1600 x 900 stage and the whole stage is scaled to fit the viewport, so a
+ * relative unit here would scale twice.
+ */
+
+@font-face { font-family: "Sora"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/sora-400.woff2") format("woff2"); }
+@font-face { font-family: "Sora"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/sora-600.woff2") format("woff2"); }
+@font-face { font-family: "Sora"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/sora-700.woff2") format("woff2"); }
+
+:root {
+  --bwd-ink: #0A0C29;
+  --bwd-paper: #FFFFFF;
+  --bwd-wash: #F5F6FF;
+  --bwd-accent: #4F46E5;
+  --bwd-accent-soft: #A5A7FF;
+  --bwd-on-dark: rgba(255, 255, 255, .74);
+  --bwd-on-light: #4C4C4C;
+  --bwd-muted: #667085;
+  --bwd-faint: #A0AFC0;
+  --bwd-rule: #EFEFF0;
+  --bwd-stage-w: 1600px;
+  --bwd-stage-h: 900px;
+  --bwd-scale: 1;
+  color-scheme: dark;
+}
+
+/* A hard reset. The deck owns every pixel of this document. */
+*, *::before, *::after { box-sizing: border-box; }
+
+.bwd-body {
+  margin: 0;
+  padding: 0;
+  background: var(--bwd-ink);
+  color: var(--bwd-paper);
+  font-family: "Sora", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/*
+ * :where() so the reset carries no specificity of its own beyond .bwd-body.
+ * Written as a plain descendant selector it beat every single-class rule that
+ * came after it — a list item could not get its own padding back, and the tick
+ * on a package benefit sat on top of the first letter.
+ */
+.bwd-body :where(h1, h2, p, ul, li) {
+  margin: 0;
+  padding: 0;
+  font-weight: 400;
+}
+
+.bwd-body :where(ul) { list-style: none; }
+.bwd-body img { max-width: 100%; display: block; }
+
+.bwd-body a { color: inherit; }
+
+.bwd-body :focus-visible {
+  outline: 2px solid var(--bwd-accent-soft);
+  outline-offset: 3px;
+}
+
+/* --- The stage ------------------------------------------------------------ */
+
+.bwd { position: relative; width: 100%; height: 100vh; }
+
+.bwd-stagewrap { position: relative; width: 100%; height: 100%; }
+
+.bwd-slide {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bwd-slide.is-current { display: flex; animation: bwIn 320ms ease both; }
+
+@keyframes bwIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bwd-slide--dark { background: var(--bwd-ink); color: var(--bwd-paper); }
+.bwd-slide--light { background: var(--bwd-paper); color: var(--bwd-ink); }
+
+/*
+ * The stage is 900px tall by design and taller when a deck's own content asks
+ * for it — a client with eleven estimate phases gets a taller slide, not a
+ * clipped one. The script scales each stage by its real height, so a taller
+ * slide simply sits smaller on the screen.
+ */
+.bwd-stage {
+  position: relative;
+  width: var(--bwd-stage-w);
+  min-height: var(--bwd-stage-h);
+  flex: 0 0 auto;
+  padding: 92px 104px 108px;
+  transform: scale(var(--bwd-scale));
+  transform-origin: center center;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* --- Type ----------------------------------------------------------------- */
+
+.bwd-display { font-size: 104px; line-height: 1.02; font-weight: 700; letter-spacing: -2.5px; }
+.bwd-h1 { font-size: 84px; line-height: 1.04; font-weight: 700; letter-spacing: -2px; }
+.bwd-h2 { font-size: 72px; line-height: 1.06; font-weight: 700; letter-spacing: -1.6px; }
+
+.bwd-lede { font-size: 30px; line-height: 1.42; color: var(--bwd-on-dark); max-width: 20ch; }
+.bwd-slide--light .bwd-lede { color: var(--bwd-on-light); }
+
+.bwd-intro { font-size: 26px; line-height: 1.45; color: var(--bwd-on-dark); max-width: 46ch; }
+.bwd-slide--light .bwd-intro { color: var(--bwd-on-light); }
+
+.bwd-eyebrow {
+  font-size: 20px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--bwd-accent-soft);
+  margin-bottom: 22px;
+}
+.bwd-slide--light .bwd-eyebrow { color: var(--bwd-accent); }
+
+.bwd-note { font-size: 19px; color: var(--bwd-faint); margin-top: auto; }
+.bwd-slide--light .bwd-note { color: var(--bwd-muted); }
+
+/* --- Decoration ----------------------------------------------------------- */
+
+.bwd-blob { position: absolute; border-radius: 50%; pointer-events: none; }
+.bwd-blob--one { width: 760px; height: 760px; background: var(--bwd-accent); opacity: .18; right: -260px; top: -280px; }
+.bwd-blob--two { width: 620px; height: 620px; background: var(--bwd-accent-soft); opacity: .14; left: -300px; bottom: -320px; }
+.bwd-blob--big { width: 1000px; height: 1000px; background: var(--bwd-accent); opacity: .16; left: 50%; top: 50%; margin: -500px 0 0 -500px; }
+
+.bwd-logo { display: inline-block; background: var(--bwd-paper); border-radius: 10px; padding: 10px 16px; }
+.bwd-logo__img { height: 26px; width: auto; }
+
+/* --- Footer marks --------------------------------------------------------- */
+
+.bwd-foot { position: absolute; bottom: 40px; font-size: 19px; color: rgba(255, 255, 255, .42); }
+.bwd-slide--light .bwd-foot { color: var(--bwd-faint); }
+.bwd-foot--left { left: 104px; }
+.bwd-foot--right { right: 104px; }
+
+/* --- Cover ---------------------------------------------------------------- */
+
+.bwd-cover { position: relative; display: flex; flex-direction: column; height: 100%; }
+.bwd-cover__top { display: flex; align-items: flex-start; justify-content: space-between; }
+.bwd-cover__kind { font-size: 20px; letter-spacing: .16em; text-transform: uppercase; color: var(--bwd-accent-soft); }
+.bwd-cover__mid { margin-top: auto; }
+.bwd-cover__mid .bwd-lede { max-width: 34ch; margin-top: 26px; }
+.bwd-cover__meta { display: flex; gap: 80px; margin-top: 56px; }
+.bwd-pair__label { font-size: 18px; letter-spacing: .14em; text-transform: uppercase; color: var(--bwd-faint); margin-bottom: 8px; }
+.bwd-pair__value { font-size: 24px; }
+
+/* --- Head row ------------------------------------------------------------- */
+
+.bwd-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 60px; }
+
+.bwd-total { text-align: right; flex: 0 0 auto; }
+.bwd-total__label { font-size: 20px; letter-spacing: .14em; text-transform: uppercase; color: var(--bwd-muted); margin-bottom: 10px; }
+.bwd-total__n { font-size: 64px; font-weight: 700; letter-spacing: -1.4px; font-variant-numeric: tabular-nums; }
+
+.bwd-mid { margin: auto 0; }
+
+/* --- Pillars -------------------------------------------------------------- */
+
+.bwd-pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.bwd-pillar { background: var(--bwd-wash); border-radius: 20px; padding: 34px 36px; }
+.bwd-pillar__n { font-size: 22px; font-weight: 700; color: var(--bwd-accent); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.bwd-pillar__title { font-size: 30px; font-weight: 600; line-height: 1.25; }
+
+/* --- Two-column ----------------------------------------------------------- */
+
+.bwd-two { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: center; height: 100%; }
+.bwd-two--study { grid-template-columns: 0.9fr 1.1fr; }
+.bwd-two--solo { grid-template-columns: minmax(0, 1100px); }
+.bwd-two__left { display: flex; flex-direction: column; gap: 24px; }
+.bwd-two__right { display: flex; flex-direction: column; gap: 0; }
+
+.bwd-hours { display: inline-flex; align-items: baseline; gap: 14px; background: rgba(79, 70, 229, .22); border-radius: 999px; padding: 14px 30px; align-self: flex-start; }
+.bwd-hours__n { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bwd-hours__label { font-size: 20px; color: var(--bwd-on-dark); }
+
+.bwd-strap { font-size: 34px; font-weight: 600; color: var(--bwd-accent-soft); }
+
+.bwd-point { display: flex; gap: 26px; padding: 26px 0; border-top: 1px solid rgba(255, 255, 255, .16); }
+.bwd-point__n { font-size: 20px; color: var(--bwd-accent-soft); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.bwd-point__text { font-size: 26px; line-height: 1.35; }
+
+/* --- Estimate ------------------------------------------------------------- */
+
+.bwd-phases { display: grid; grid-template-columns: 1fr 1fr; gap: 0 70px; }
+.bwd-phase { padding: 20px 0; border-bottom: 1px solid var(--bwd-rule); }
+.bwd-phase__row { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+.bwd-phase__name { font-size: 26px; font-weight: 600; }
+.bwd-phase__n { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--bwd-accent); }
+.bwd-phase__items { font-size: 18px; color: var(--bwd-muted); margin-top: 6px; }
+
+/* --- Packages ------------------------------------------------------------- */
+
+/* The column count follows how many packages this deck actually shows: one
+   recommendation on its own is a card, not a card and two empty columns. */
+.bwd-packages { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 24px; }
+.bwd-packages--1 { grid-template-columns: minmax(0, 560px); }
+.bwd-packages--2 { grid-template-columns: 1.25fr 1fr; }
+.bwd-pkg { border-radius: 20px; padding: 34px; display: flex; flex-direction: column; gap: 14px; }
+.bwd-pkg--main { background: var(--bwd-paper); color: var(--bwd-ink); }
+.bwd-pkg--alt { background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .22); }
+.bwd-pkg__eyebrow { font-size: 18px; letter-spacing: .14em; text-transform: uppercase; color: var(--bwd-accent); }
+.bwd-pkg__name { font-size: 42px; font-weight: 700; letter-spacing: -1px; }
+.bwd-pkg--alt .bwd-pkg__name { font-size: 32px; }
+.bwd-pkg__price { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bwd-pkg__period { font-size: 19px; font-weight: 400; color: var(--bwd-muted); }
+.bwd-pkg--alt .bwd-pkg__period { color: var(--bwd-on-dark); }
+.bwd-pkg__hours { font-size: 20px; color: var(--bwd-muted); }
+.bwd-pkg--alt .bwd-pkg__hours { color: var(--bwd-on-dark); }
+.bwd-pkg__list { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--bwd-rule); padding-top: 18px; }
+.bwd-pkg--alt .bwd-pkg__list { border-top-color: rgba(255, 255, 255, .2); }
+.bwd-pkg__item { font-size: 19px; padding-left: 26px; position: relative; }
+.bwd-pkg__item::before { content: "\2713"; position: absolute; left: 0; color: var(--bwd-accent); }
+.bwd-pkg--alt .bwd-pkg__item::before { color: var(--bwd-accent-soft); }
+.bwd-pkg__commit { font-size: 18px; color: var(--bwd-muted); margin-top: auto; }
+
+/* --- Timeline ------------------------------------------------------------- */
+
+.bwd-tl { display: flex; flex-direction: column; gap: 12px; }
+.bwd-tl__row { display: grid; grid-template-columns: 276px 1fr; gap: 24px; align-items: center; }
+.bwd-tl__title { font-size: 22px; font-weight: 600; }
+.bwd-tl__range { font-size: 18px; color: var(--bwd-muted); }
+.bwd-tl__track { position: relative; height: 44px; background: var(--bwd-wash); border-radius: 10px; }
+.bwd-tl__bar { position: absolute; top: 4px; bottom: 4px; border-radius: 8px; display: flex; align-items: center; padding: 0 16px; overflow: hidden; }
+.bwd-tl__bar--pre { background: var(--bwd-accent); }
+.bwd-tl__bar--launch { background: var(--bwd-ink); }
+.bwd-tl__bar--post { background: #8B84EA; }
+.bwd-tl__text { font-size: 18px; color: var(--bwd-paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bwd-tl__aside { font-size: 17px; color: var(--bwd-on-light); margin-top: 4px; }
+
+.bwd-legend { display: flex; align-items: center; gap: 12px; font-size: 19px; color: var(--bwd-muted); }
+.bwd-key { width: 14px; height: 14px; border-radius: 4px; display: inline-block; margin-left: 18px; }
+.bwd-key--pre { background: var(--bwd-accent); margin-left: 0; }
+.bwd-key--launch { background: var(--bwd-ink); }
+.bwd-key--post { background: #8B84EA; }
+
+/* --- Cards ---------------------------------------------------------------- */
+
+.bwd-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.bwd-card { background: var(--bwd-wash); border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 10px; }
+.bwd-card__label { font-size: 18px; letter-spacing: .12em; text-transform: uppercase; color: var(--bwd-accent); }
+.bwd-card__title { font-size: 26px; font-weight: 600; }
+.bwd-card__text { font-size: 19px; color: var(--bwd-muted); }
+.bwd-card__n { font-size: 22px; font-weight: 600; margin-top: auto; font-variant-numeric: tabular-nums; }
+
+/* --- Process -------------------------------------------------------------- */
+
+.bwd-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 26px; }
+.bwd-step { border-top: 2px solid var(--bwd-accent); padding-top: 22px; }
+.bwd-step__n { font-size: 44px; font-weight: 700; color: var(--bwd-accent-soft); font-variant-numeric: tabular-nums; }
+.bwd-step__title { font-size: 30px; font-weight: 600; margin-top: 10px; }
+
+/* --- Case study ----------------------------------------------------------- */
+
+.bwd-studyn { font-size: 120px; font-weight: 700; color: rgba(255, 255, 255, .12); line-height: 1; }
+.bwd-sector { font-size: 24px; color: var(--bwd-accent-soft); }
+.bwd-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.bwd-chip { font-size: 18px; border: 1px solid rgba(255, 255, 255, .26); border-radius: 999px; padding: 8px 18px; }
+.bwd-link__a { font-size: 22px; color: var(--bwd-accent-soft); text-decoration: none; }
+.bwd-link__a:hover { text-decoration: underline; }
+
+.bwd-shots { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
+.bwd-shot { border-radius: 16px; }
+.bwd-shot--desktop { max-height: 520px; width: 100%; object-fit: cover; }
+.bwd-shots__small { display: flex; flex-direction: column; gap: 20px; }
+.bwd-shot--tablet { width: 220px; height: 290px; object-fit: cover; }
+.bwd-shot--mobile { width: 150px; height: 210px; object-fit: cover; }
+
+/* --- Call to action ------------------------------------------------------- */
+
+.bwd-cta { position: relative; margin: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.bwd-cta .bwd-lede { max-width: 30ch; }
+.bwd-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 38px;
+  border-radius: 999px;
+  background: var(--bwd-paper);
+  color: var(--bwd-ink);
+  font-size: 22px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 200ms ease, color 200ms ease;
+}
+.bwd-btn:hover { background: var(--bwd-accent-soft); }
+.bwd-cta__email { font-size: 20px; color: var(--bwd-on-dark); }
+
+/* --- Navigation ----------------------------------------------------------- */
+
+.bwd-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 10;
+}
+
+.bwd-nav__arrow {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .3);
+  background: rgba(10, 12, 41, .72);
+  color: var(--bwd-paper);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+.bwd-nav__arrow:hover { background: var(--bwd-accent); }
+.bwd-nav__arrow[disabled] { opacity: .35; cursor: default; }
+
+.bwd-nav__dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(10, 12, 41, .72);
+  border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 999px;
+  padding: 14px 18px;
+}
+
+.bwd-nav__dot {
+  width: 26px;
+  height: 4px;
+  min-height: 4px;
+  border: 0;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .32);
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+.bwd-nav__dot.is-current { background: var(--bwd-accent-soft); }
+
+/* --- The password gate ---------------------------------------------------- */
+
+.bwd--gate { display: flex; align-items: center; justify-content: center; }
+.bwd-gate { width: 420px; max-width: calc(100% - 44px); display: flex; flex-direction: column; gap: 12px; }
+.bwd-gate__eyebrow { font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--bwd-accent-soft); }
+.bwd-gate__title { font-size: 34px; font-weight: 700; letter-spacing: -1px; }
+.bwd-gate__lede { font-size: 16px; color: var(--bwd-on-dark); margin-bottom: 10px; }
+.bwd-gate__label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--bwd-faint); }
+.bwd-gate__input {
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .3);
+  background: rgba(255, 255, 255, .06);
+  color: var(--bwd-paper);
+  font-family: inherit;
+  font-size: 16px;
+  padding: 0 14px;
+}
+.bwd-gate__error { font-size: 14px; color: #FFB4AB; }
+.bwd-gate__btn {
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bwd-paper);
+  color: var(--bwd-ink);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* --- Below 900px: a readable flow, never a shrunken slide ----------------- */
+
+@media (max-width: 900px) {
+  .bwd-body { overflow: auto; }
+  .bwd { height: auto; }
+  .bwd-stagewrap { height: auto; }
+
+  .bwd-slide { position: static; display: block; animation: none; }
+  .bwd-slide.is-current { display: block; animation: none; }
+
+  .bwd-stage {
+    width: 100%;
+    min-height: 0;
+    padding: 44px 22px 48px;
+    transform: none;
+    gap: 26px;
+  }
+
+  .bwd-display { font-size: 34px; letter-spacing: -.6px; }
+  .bwd-h1 { font-size: 30px; letter-spacing: -.5px; }
+  .bwd-h2 { font-size: 26px; letter-spacing: -.4px; }
+  .bwd-lede { font-size: 17px; line-height: 1.6; max-width: none; }
+  .bwd-intro { font-size: 16px; line-height: 1.6; }
+  .bwd-eyebrow { font-size: 12px; margin-bottom: 12px; }
+  .bwd-note { font-size: 14px; }
+
+  .bwd-cover__meta { flex-direction: column; gap: 18px; margin-top: 30px; }
+  .bwd-cover__mid .bwd-lede { margin-top: 14px; }
+  .bwd-cover__kind { font-size: 12px; }
+  .bwd-pair__label { font-size: 11px; }
+  .bwd-pair__value { font-size: 17px; }
+
+  .bwd-head { flex-direction: column; gap: 20px; }
+  .bwd-total { text-align: left; }
+  .bwd-total__label { font-size: 12px; }
+  .bwd-total__n { font-size: 40px; }
+
+  .bwd-pillars,
+  .bwd-two,
+  .bwd-two--study,
+  .bwd-phases,
+  .bwd-packages,
+  .bwd-cards,
+  .bwd-steps { grid-template-columns: 1fr; gap: 14px; }
+
+  .bwd-two { gap: 26px; height: auto; }
+  .bwd-pillar { padding: 20px; }
+  .bwd-pillar__title { font-size: 18px; }
+  .bwd-point { padding: 16px 0; gap: 14px; }
+  .bwd-point__text { font-size: 17px; }
+  .bwd-hours__n { font-size: 28px; }
+  .bwd-hours__label { font-size: 15px; }
+  .bwd-strap { font-size: 20px; }
+
+  .bwd-phase__name, .bwd-phase__n { font-size: 18px; }
+  .bwd-phase__items { font-size: 14px; }
+
+  .bwd-pkg__name { font-size: 28px; }
+  .bwd-pkg--alt .bwd-pkg__name { font-size: 22px; }
+  .bwd-pkg__price { font-size: 22px; }
+  .bwd-pkg__item, .bwd-pkg__hours { font-size: 15px; }
+
+  .bwd-tl__row { grid-template-columns: 1fr; gap: 8px; }
+  .bwd-tl__title { font-size: 17px; }
+  .bwd-tl__range { font-size: 14px; }
+  .bwd-tl__track { height: 30px; }
+  .bwd-tl__text { font-size: 13px; }
+  .bwd-legend { font-size: 14px; flex-wrap: wrap; }
+
+  .bwd-card__title { font-size: 18px; }
+  .bwd-card__text { font-size: 15px; }
+  .bwd-step__n { font-size: 28px; }
+  .bwd-step__title { font-size: 19px; }
+
+  .bwd-studyn { font-size: 56px; }
+  .bwd-sector { font-size: 16px; }
+  .bwd-chip { font-size: 14px; }
+  .bwd-shots { grid-template-columns: 1fr; }
+  .bwd-shots__small { flex-direction: row; }
+
+  .bwd-foot { position: static; font-size: 13px; margin-top: 20px; }
+  .bwd-foot--right { display: none; }
+
+  .bwd-blob { display: none; }
+
+  .bwd-nav { display: none; }
+
+  .bwd-btn { width: 100%; justify-content: center; min-height: 52px; font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bwd-slide.is-current { animation: none; }
+  .bwd-body * { transition: none !important; }
+}

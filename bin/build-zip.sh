@@ -39,6 +39,9 @@ INCLUDE=(
 	# it fatals the moment WordPress activates the plugin. The "everything the
 	# plugin requires is in the zip" check below is what catches the next one.
 	"plugin-update-checker"
+	# The shared page editor library, which builds every record editor this
+	# plugin has. Vendored verbatim from the foundation and hash-checked there.
+	"blueworx-page-editor"
 )
 
 # Belt and braces. The allowlist already excludes these, so a hit here means one
