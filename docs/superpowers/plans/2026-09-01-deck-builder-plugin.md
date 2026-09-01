@@ -84,3 +84,42 @@ the deck's own data, keyboard navigation, and the mobile flow below 900px.
 ### Task 7: Tests, then the artifact
 Playwright against the local harness covering create → estimate → recommendation → publish
 → the client link, plus the privacy whitelist. Then version, changelog, zip, verify.
+
+---
+
+## What actually happened
+
+All seven tasks landed, in one pass, as version 0.2.0. Four things are worth
+knowing, because none of them was in the plan.
+
+**Records-are-post-types held, and the design's "one screen, many packages"
+did not.** The design draws every support package as a panel on one screen.
+The Foundation's rule is that anything record-like is a post type with one
+editor per record, so packages, case studies and library entries each got a
+list screen and their own editor. The rule won; the screens read the same.
+
+**The recommendation panel is worked out when the screen opens, not as you
+type.** The page editor's `facts` control takes its rows from the schema, and a
+schema is built per request — so the figures are right, they just do not move
+until you save. The three totals that do need to be live are in the summary
+strip, which is computed in the browser. Making the whole panel live would mean
+a new control in the design system, which is a Foundation change, not a plugin
+one.
+
+**The summary strip cannot add up across two lists.** `sum` names one
+repeater's cell, so "in package calculation" is shown as two cells — project
+and post-launch — rather than the design's single figure. Letting `sum` take a
+list of targets is a small Foundation change and the right one; it is not made
+here.
+
+**Four real bugs came out of the specs, not out of reading the code.** A
+submenu item removed on `admin_menu` makes its own page answer 403. A deck's
+value reader treated a stored "off" as "never set", so disabling a client link
+left the deck on the web. The client link field read a meta key that is never
+written. And the builder's own section names were being printed as client-facing
+headings. Every one of them passed a read-through and failed a browser.
+
+**Still open, and deliberately so:** insert-from-library on the sections tab and
+"save this line item to the content library" are both wired as data but have no
+button yet. The preview tab shows the link rather than an embedded frame of the
+deck. Neither blocks using the plugin.
