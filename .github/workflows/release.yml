@@ -1,0 +1,15 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+# `contents: write` is required: a reusable workflow cannot widen the
+# permissions its caller gives it, so without this, publishing fails with a 403.
+jobs:
+  release:
+    uses: blueworx-io/bluegroup_core_foundation/.github/workflows/release-wordpress.yml@v1
+    with:
+      plugin_slug: blueworx-labs-deck-builder
+      foundation_ref: v1
+    permissions:
+      contents: write

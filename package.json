@@ -1,0 +1,15 @@
+{
+  "name": "blueworx-labs-deck-builder",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Deck Builder — a BlueWorx Labs WordPress plugin.",
+  "scripts": {
+    "lint": "echo \"PHP is linted by PHPCS (config: phpcs.xml.dist), which CI runs as its own step after installing Composer. Run \"composer lint\" locally. No JS to lint.\"",
+    "build": "echo \"No build step: the plugin ships plain PHP, CSS and JS.\"",
+    "build:zip": "bash bin/build-zip.sh",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
