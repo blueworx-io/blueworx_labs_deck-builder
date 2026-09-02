@@ -90,7 +90,13 @@ class Blueworx_Deck_Builder_Admin {
 			self::CAPABILITY,
 			self::PAGE_SLUG,
 			[ $this, 'render_decks' ],
-			'dashicons-slides',
+			// The design system's own icon, not a WordPress one. It comes back
+			// as a data URI because WordPress draws this menu itself, before
+			// any of the system's JavaScript has run — see Icons::menu(),
+			// which is also where the trade-off is written down: a background
+			// image cannot inherit a colour, so this icon does not brighten on
+			// hover the way a dashicon does.
+			\Blueworx\PageEditor\v1\Icons::menu( 'playing-cards-fan' ),
 			58
 		);
 
