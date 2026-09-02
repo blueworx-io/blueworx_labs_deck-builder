@@ -6,6 +6,30 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-02
+
+### Added
+
+- A **BlueWorx: Sales Agent** role. It can do everything in the deck builder
+  and nothing else on the site — no posts, pages, comments, users, settings
+  or plugins. Pick it when adding a user.
+
+### Changed
+
+- The deck builder is behind a permission of its own rather than the site's
+  settings permission. Administrators and sales agents have it; nobody else
+  does, including editors.
+- Decks, packages, case studies and library entries are behind the same
+  permission, so WordPress's own checks agree with the plugin's screens.
+
+Client links are unaffected. A published deck stays open to anyone with the
+link, with no WordPress account needed.
+
+### Fixed
+
+- Archiving or restoring took the record id on trust. It checks the record is
+  a deck first, and says so when it is not.
+
 ## [0.3.0] - 2026-09-02
 
 ### Added
@@ -66,7 +90,8 @@ All notable changes to this plugin are recorded here. The format is
   each new version from wp-admin.
 - `npm run build:zip` builds and verifies the installable plugin zip.
 
-[Unreleased]: https://github.com/blueworx-io/blueworx_labs_deck-builder/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/blueworx-io/blueworx_labs_deck-builder/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.4.0
 [0.3.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.3.0
 [0.2.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.2.0
 [0.1.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.1.0

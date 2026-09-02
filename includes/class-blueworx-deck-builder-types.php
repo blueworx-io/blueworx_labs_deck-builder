@@ -49,6 +49,14 @@ final class Blueworx_Deck_Builder_Types {
 			'rewrite'             => false,
 			'show_in_rest'        => false,
 			'supports'            => [ 'title', 'revisions', 'author' ],
+			// Behind this plugin's own capability rather than the built-in
+			// post ones. Left as they came, an editor's `edit_others_posts`
+			// would be enough to change any deck on the site through any route
+			// that asks the post type instead of asking these screens — and
+			// the page editor library asks `edit_post` on every save.
+			'capability_type'     => 'blueworx_deck_record',
+			'map_meta_cap'        => true,
+			'capabilities'        => Blueworx_Deck_Builder_Roles::post_type_caps(),
 		];
 
 		register_post_type( self::DECK, array_merge( $shared, [ 'label' => __( 'Decks', 'blueworx-labs-deck-builder' ) ] ) );

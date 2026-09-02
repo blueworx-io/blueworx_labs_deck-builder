@@ -35,9 +35,21 @@ foreach ( $blueworx_deck_builder_types as $blueworx_deck_builder_type ) {
 	}
 }
 
+/*
+ * The sales agent role, and the capability administrators were given. Removed
+ * here and never on deactivation: turning the plugin off and on again must not
+ * strip a role off the people who have it.
+ */
+remove_role( 'blueworx_sales_agent' );
+$blueworx_deck_builder_admin = get_role( 'administrator' );
+if ( $blueworx_deck_builder_admin instanceof WP_Role ) {
+	$blueworx_deck_builder_admin->remove_cap( 'manage_blueworx_decks' );
+}
+
 $blueworx_deck_builder_options = array(
 	'blueworx_deck_builder_settings',
 	'blueworx_deck_builder_version',
+	'blueworx_deck_builder_roles_version',
 );
 
 foreach ( $blueworx_deck_builder_options as $blueworx_deck_builder_option ) {

@@ -17,6 +17,20 @@ const CREATE = '/wp-admin/admin.php?page=blueworx-labs-deck-builder-create';
 const PACKAGES = '/wp-admin/admin.php?page=blueworx-labs-deck-builder-packages';
 const EDITOR = '/wp-admin/admin.php?page=blueworx-deck-editor&id=';
 
+// Sign in as somebody other than the admin, and hand back the context so the
+// caller can close it. Kept separate from signIn(), which caches the admin
+// state to a file every other spec then reuses — a second account must never
+// overwrite that.
+async function signInAs(browser, user, pass) {
+  const context = await browser.newContext({ storageState: undefined });
+  const page = await context.newPage();
+  await page.goto(LOGIN_PATH);
+  await page.fill("#user_login", user);
+  await page.fill("#user_pass", pass);
+  await page.click("#wp-submit");
+  return { context, page };
+}
+
 async function signIn(browser) {
   // Every test loads AUTH_STATE, including — by default — the context that
   // goes and creates it. Overriding it back to "no state yet" breaks that
@@ -73,4 +87,4 @@ async function save(page) {
   await expect(bar.locator('.bw-savebar__hint')).toHaveText(/everything is saved/i, { timeout: 30000 });
 }
 
-module.exports = { AUTH_STATE, DECKS, CREATE, PACKAGES, EDITOR, signIn, createDeck, openEditor, save };
+module.exports = { AUTH_STATE, DECKS, CREATE, PACKAGES, EDITOR, signIn, signInAs, createDeck, openEditor, save };
