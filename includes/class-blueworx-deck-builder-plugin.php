@@ -21,6 +21,7 @@ final class Blueworx_Deck_Builder_Plugin {
 	public static function boot() {
 		Blueworx_Deck_Builder_Types::register();
 		Blueworx_Deck_Builder_Editor::register();
+		Blueworx_Deck_Builder_Library::register();
 		Blueworx_Deck_Builder_Link::register();
 		Blueworx_Deck_Builder_Admin::instance()->register();
 	}

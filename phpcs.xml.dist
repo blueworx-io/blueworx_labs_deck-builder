@@ -24,6 +24,20 @@
 
 	<rule ref="WordPress"/>
 
+	<!--
+		House style, settled once for every BlueWorx plugin rather than per repo.
+		The shared page editor library this plugin builds its screens from is
+		written in short array syntax, and a field schema reads as a table when
+		its rows stay on one line. Following WordPress core here would mean this
+		plugin's code and the library it calls looked like two different projects.
+	-->
+	<rule ref="Universal.Arrays.DisallowShortArraySyntax">
+		<severity>0</severity>
+	</rule>
+	<rule ref="WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound">
+		<severity>0</severity>
+	</rule>
+
 	<config name="minimum_wp_version" value="6.5"/>
 
 	<rule ref="WordPress.WP.I18n">

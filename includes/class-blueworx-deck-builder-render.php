@@ -96,6 +96,7 @@ final class Blueworx_Deck_Builder_Render {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow, noarchive" />
 <title><?php echo esc_html( wp_strip_all_tags( $title ) ); ?></title>
+<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- the client deck is its own document: no wp_head(), so no queue to enqueue into. This is the only stylesheet on the page, by design. ?>
 <link rel="stylesheet" href="<?php echo esc_url( $base . 'assets/deck.css?ver=' . BLUEWORX_DECK_BUILDER_VERSION ); ?>" />
 </head>
 <body class="bwd-body">
@@ -111,6 +112,7 @@ final class Blueworx_Deck_Builder_Render {
 	private static function foot( $with_script = true ) {
 		if ( $with_script ) {
 			printf(
+				// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- see the stylesheet above; there is no wp_footer() on this document either.
 				'<script src="%s"></script>',
 				esc_url( BLUEWORX_DECK_BUILDER_URL . 'assets/deck.js?ver=' . BLUEWORX_DECK_BUILDER_VERSION )
 			);
@@ -766,10 +768,10 @@ final class Blueworx_Deck_Builder_Render {
 	 * One image from the media library, or nothing at all.
 	 *
 	 * @param int    $id    Attachment id.
-	 * @param string $class Class to put on it.
+	 * @param string $css   Class to put on it.
 	 * @return void
 	 */
-	private static function image( $id, $class ) {
+	private static function image( $id, $css ) {
 		if ( ! $id ) {
 			return;
 		}
@@ -777,7 +779,7 @@ final class Blueworx_Deck_Builder_Render {
 		if ( ! $src ) {
 			return;
 		}
-		printf( '<img class="%s" src="%s" alt="" />', esc_attr( $class ), esc_url( $src ) );
+		printf( '<img class="%s" src="%s" alt="" />', esc_attr( $css ), esc_url( $src ) );
 	}
 
 	/**

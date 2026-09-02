@@ -88,6 +88,7 @@ final class Blueworx_Deck_Builder_Deck {
 			[
 				'post_type'   => Blueworx_Deck_Builder_Types::DECK,
 				'post_status' => [ 'draft', 'publish', 'private', 'pending' ],
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_numberposts -- the decks screen lists every deck; an agency has tens, not thousands.
 				'numberposts' => 200,
 				'orderby'     => 'modified',
 				'order'       => 'DESC',
@@ -286,13 +287,13 @@ final class Blueworx_Deck_Builder_Deck {
 	 * Hours in a list, counting only rows whose named switch is on.
 	 *
 	 * @param string $field  Repeater field id.
-	 * @param string $switch Cell id of the switch that decides.
+	 * @param string $toggle Cell id of the switch that decides.
 	 * @return float
 	 */
-	public function hours( $field, $switch = 'in_total' ) {
+	public function hours( $field, $toggle = 'in_total' ) {
 		$total = 0.0;
 		foreach ( $this->rows( $field ) as $row ) {
-			if ( '' !== $switch && empty( $row[ $switch ] ) ) {
+			if ( '' !== $toggle && empty( $row[ $toggle ] ) ) {
 				continue;
 			}
 			$total += (float) ( $row['hours'] ?? 0 );

@@ -22,6 +22,14 @@ final class Blueworx_Deck_Builder_Editor {
 	const SETTINGS_SCREEN = 'blueworx-labs-deck-builder-settings';
 
 	/**
+	 * Which library panel a field belongs to. A panel cannot carry a
+	 * condition — only a field can — so both panels are always on screen
+	 * and every field in them says which sort of entry it is for.
+	 */
+	const SHOWN_FOR_SECTION   = [ 'field' => 'entry_type', 'value' => Blueworx_Deck_Builder_Library::SECTION ];
+	const SHOWN_FOR_LINE_ITEM = [ 'field' => 'entry_type', 'value' => Blueworx_Deck_Builder_Library::LINE_ITEM ];
+
+	/**
 	 * Where the plugin's own settings are kept.
 	 *
 	 * @var string
@@ -170,8 +178,18 @@ final class Blueworx_Deck_Builder_Editor {
 			'summary'    => [
 				[ 'id' => 'project', 'label' => __( 'Project estimate', 'blueworx-labs-deck-builder' ), 'sum' => 'estimate.hours', 'where' => 'estimate.in_total', 'suffix' => 'hrs', 'foot' => __( 'Work required before launch', 'blueworx-labs-deck-builder' ) ],
 				[ 'id' => 'postlaunch', 'label' => __( 'Post-launch work', 'blueworx-labs-deck-builder' ), 'sum' => 'postlaunch.hours', 'where' => 'postlaunch.in_total', 'suffix' => 'hrs', 'foot' => __( 'Work planned after launch', 'blueworx-labs-deck-builder' ) ],
-				[ 'id' => 'in_package_project', 'label' => __( 'In package · project', 'blueworx-labs-deck-builder' ), 'sum' => 'estimate.hours', 'where' => 'estimate.in_package', 'suffix' => 'hrs', 'foot' => __( 'Counts towards the recommendation', 'blueworx-labs-deck-builder' ) ],
-				[ 'id' => 'in_package_post', 'label' => __( 'In package · after', 'blueworx-labs-deck-builder' ), 'sum' => 'postlaunch.hours', 'where' => 'postlaunch.in_package', 'suffix' => 'hrs', 'foot' => __( 'Counts towards the recommendation', 'blueworx-labs-deck-builder' ) ],
+				// One cell, not two. The recommendation is worked out from the
+				// project work and the work after launch together, so somebody
+				// reading two figures side by side would be adding them up in
+				// their head to check the panel below.
+				[
+					'id'     => 'in_package',
+					'label'  => __( 'In package calculation', 'blueworx-labs-deck-builder' ),
+					'sum'    => [ 'estimate.hours', 'postlaunch.hours' ],
+					'where'  => [ 'estimate.in_package', 'postlaunch.in_package' ],
+					'suffix' => 'hrs',
+					'foot'   => __( 'What the recommendation covers', 'blueworx-labs-deck-builder' ),
+				],
 				[ 'id' => 'phases', 'label' => __( 'Timeline phases', 'blueworx-labs-deck-builder' ), 'count' => 'timeline', 'foot' => __( 'On the client timeline', 'blueworx-labs-deck-builder' ) ],
 			],
 			'tabs'       => [
@@ -258,6 +276,61 @@ final class Blueworx_Deck_Builder_Editor {
 						],
 					],
 				],
+				self::library_panel(
+					'sections',
+					'Client deck · Content library',
+					__( 'Add a section from the library', 'blueworx-labs-deck-builder' ),
+					__( 'Tick what this deck needs and save. Each one is copied into the list above, and editing it here leaves the library entry alone.', 'blueworx-labs-deck-builder' ),
+					Blueworx_Deck_Builder_Library::SECTION
+				),
+			],
+		];
+	}
+
+	/**
+	 * The panel that brings library entries into one of a deck's lists.
+	 *
+	 * A tick is the instruction and saving carries it out — the page editor's
+	 * control list has no button in it, and a plugin adds a control to the
+	 * design system rather than inventing one of its own. The tick clears
+	 * itself once the rows are in, so the panel always reads as empty until
+	 * somebody asks for something.
+	 *
+	 * @param string $target  Which of the deck's lists entries land in.
+	 * @param string $eyebrow Panel eyebrow.
+	 * @param string $title   Panel title.
+	 * @param string $note    Panel note.
+	 * @param string $type    Which sort of entry to offer.
+	 * @return array<string,mixed>
+	 */
+	private static function library_panel( $target, $eyebrow, $title, $note, $type ) {
+		$options = Blueworx_Deck_Builder_Library::options( $type );
+
+		return [
+			'id'      => 'library_' . $target,
+			'eyebrow' => $eyebrow,
+			'title'   => $title,
+			'note'    => $note,
+			'fields'  => [
+				$options
+					? [
+						'id'      => Blueworx_Deck_Builder_Library::PICKERS[ $target ],
+						'kind'    => 'checkboxes',
+						'label'   => __( 'Library entries', 'blueworx-labs-deck-builder' ),
+						'options' => $options,
+						'wide'    => true,
+					]
+					: [
+						'id'    => 'library_' . $target . '_empty',
+						'kind'  => 'facts',
+						'label' => __( 'Library entries', 'blueworx-labs-deck-builder' ),
+						'rows'  => [
+							[
+								'label' => __( 'Nothing saved yet', 'blueworx-labs-deck-builder' ),
+								'value' => __( 'Entries you save from a deck, and any you write in the content library, appear here.', 'blueworx-labs-deck-builder' ),
+							],
+						],
+					],
 			],
 		];
 	}
@@ -279,6 +352,13 @@ final class Blueworx_Deck_Builder_Editor {
 					'note'    => __( 'Rows fall under their phase, and each phase carries its own subtotal. Only rows with the package switch on count towards the recommendation.', 'blueworx-labs-deck-builder' ),
 					'fields'  => [ self::line_items( 'estimate', Blueworx_Deck_Builder_Types::project_phases() ) ],
 				],
+				self::library_panel(
+					'estimate',
+					'Estimate · Content library',
+					__( 'Add a line item from the library', 'blueworx-labs-deck-builder' ),
+					__( 'Tick what this project needs and save. Each one arrives as a new row, counting towards every total until you say otherwise.', 'blueworx-labs-deck-builder' ),
+					Blueworx_Deck_Builder_Library::LINE_ITEM
+				),
 			],
 		];
 	}
@@ -301,6 +381,13 @@ final class Blueworx_Deck_Builder_Editor {
 					'note'    => __( 'The ongoing work this client should expect once the site is live.', 'blueworx-labs-deck-builder' ),
 					'fields'  => [ self::line_items( 'postlaunch', Blueworx_Deck_Builder_Types::postlaunch_phases() ) ],
 				],
+				self::library_panel(
+					'postlaunch',
+					'Post-launch · Content library',
+					__( 'Add a line item from the library', 'blueworx-labs-deck-builder' ),
+					__( 'The same library the project estimate draws on. Ongoing work is written once and reused.', 'blueworx-labs-deck-builder' ),
+					Blueworx_Deck_Builder_Library::LINE_ITEM
+				),
 			],
 		];
 	}
@@ -309,7 +396,7 @@ final class Blueworx_Deck_Builder_Editor {
 	 * One estimate list. Both tabs use this: the two lists are structurally
 	 * identical, and only their data and their totals are separate.
 	 *
-	 * @param string                         $id     Field id.
+	 * @param string                          $id     Field id.
 	 * @param array<int,array<string,string>> $phases Phase options.
 	 * @return array<string,mixed>
 	 */
@@ -331,6 +418,12 @@ final class Blueworx_Deck_Builder_Editor {
 				[ 'id' => 'in_total', 'kind' => 'toggle', 'label' => __( 'In total', 'blueworx-labs-deck-builder' ) ],
 				[ 'id' => 'show_client', 'kind' => 'toggle', 'label' => __( 'Shown to client', 'blueworx-labs-deck-builder' ) ],
 				[ 'id' => 'in_package', 'kind' => 'toggle', 'label' => __( 'In package calculation', 'blueworx-labs-deck-builder' ) ],
+				// Turning this on and saving keeps a copy of the row in the
+				// content library, then turns itself back off — see
+				// Blueworx_Deck_Builder_Library. It is a switch because a row
+				// has nowhere to put a button, and the internal note is left
+				// behind because it was written about this client.
+				[ 'id' => Blueworx_Deck_Builder_Library::SAVE_CELL, 'kind' => 'toggle', 'label' => __( 'Save to library', 'blueworx-labs-deck-builder' ) ],
 			],
 		];
 	}
@@ -383,11 +476,11 @@ final class Blueworx_Deck_Builder_Editor {
 					'note'    => null === $deck ? '' : $deck->recommendation()['reason'],
 					'fields'  => [
 						[
-							'id'      => 'calculation',
-							'kind'    => 'facts',
-							'label'   => __( 'How this was worked out', 'blueworx-labs-deck-builder' ),
-							'rows'    => self::recommendation_facts( $deck ),
-							'help'    => __( 'Worked out when this screen opened. Save to bring it up to date after changing hours.', 'blueworx-labs-deck-builder' ),
+							'id'    => 'calculation',
+							'kind'  => 'facts',
+							'label' => __( 'How this was worked out', 'blueworx-labs-deck-builder' ),
+							'rows'  => self::recommendation_facts( $deck ),
+							'help'  => __( 'Worked out when this screen opened. Save to bring it up to date after changing hours.', 'blueworx-labs-deck-builder' ),
 						],
 						[ 'id' => 'override', 'kind' => 'select', 'label' => __( 'Manual override', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Packages::options( __( 'Use the automatic recommendation', 'blueworx-labs-deck-builder' ) ), 'help' => __( 'An override is marked here but shows to the client as the selected recommendation.', 'blueworx-labs-deck-builder' ) ],
 						[ 'id' => 'alternatives', 'kind' => 'checkboxes', 'label' => __( 'Shown for comparison', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Packages::options(), 'wide' => true, 'help' => __( 'Alternatives sit alongside the recommendation, with less emphasis.', 'blueworx-labs-deck-builder' ) ],
@@ -408,6 +501,31 @@ final class Blueworx_Deck_Builder_Editor {
 			'id'     => 'share',
 			'label'  => __( 'Preview and share', 'blueworx-labs-deck-builder' ),
 			'panels' => [
+				[
+					'id'      => 'preview',
+					'eyebrow' => 'Client · Preview',
+					'title'   => __( 'What the client sees', 'blueworx-labs-deck-builder' ),
+					'note'    => __( 'The deck on its own client link. Save first — the frame shows what has been saved, not what is on screen.', 'blueworx-labs-deck-builder' ),
+					'fields'  => [
+						[
+							'id'    => 'client_preview',
+							'kind'  => 'preview',
+							'label' => __( 'Client deck', 'blueworx-labs-deck-builder' ),
+							// A draft deck frames too. The client link already
+							// shows an unpublished deck to somebody who may
+							// edit it and a not-found page to everybody else,
+							// so this previews the real page rather than an
+							// approximation of it — and a deck can be checked
+							// before it is ever published, which is the whole
+							// point of a preview. Archived or disabled is the
+							// one case with nothing to show: that page is gone
+							// for the editor too, and framing the not-found it
+							// returns would read as the deck being broken.
+							'url'   => null === $deck || ! self::previewable( $deck ) ? '' : $deck->link(),
+							'help'  => null === $deck ? '' : self::link_help( $deck ),
+						],
+					],
+				],
 				[
 					'id'      => 'link',
 					'eyebrow' => 'Client · Link',
@@ -561,6 +679,22 @@ final class Blueworx_Deck_Builder_Editor {
 	}
 
 	/**
+	 * Whether there is a page to frame at all.
+	 *
+	 * Not the same question as whether the link is live: an unpublished deck
+	 * has a page that its own editors can open, which is exactly what a
+	 * preview is for. An archived or disabled one has nothing, for anybody.
+	 *
+	 * @param Blueworx_Deck_Builder_Deck $deck Open deck.
+	 * @return bool
+	 */
+	private static function previewable( Blueworx_Deck_Builder_Deck $deck ) {
+		return 'archived' !== $deck->status()
+			&& (bool) $deck->get( 'link_enabled', true )
+			&& '' !== $deck->link();
+	}
+
+	/**
 	 * What the help line under the client link says, which depends entirely on
 	 * whether that link works right now.
 	 *
@@ -706,7 +840,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'title'      => __( 'Edit library entry', 'blueworx-labs-deck-builder' ),
 			'parent'     => Blueworx_Deck_Builder_Admin::PAGE_SLUG,
 			'eyebrow'    => 'Deck Builder · Content library',
-			'lede'       => __( 'A section any deck can be built from. Editing it inside a deck makes a copy and leaves this alone.', 'blueworx-labs-deck-builder' ),
+			'lede'       => __( 'A section or a line item any deck can be built from. Editing it inside a deck makes a copy and leaves this alone.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::LIBRARY,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
 			'tabs'       => [
@@ -715,18 +849,47 @@ final class Blueworx_Deck_Builder_Editor {
 					'label'  => __( 'Entry', 'blueworx-labs-deck-builder' ),
 					'panels' => [
 						[
+							'id'      => 'entry_kind',
+							'eyebrow' => 'Library · Entry',
+							'title'   => __( 'What this entry is', 'blueworx-labs-deck-builder' ),
+							'note'    => __( 'A section becomes a slide. A line item becomes a row on an estimate. The panels below follow whichever you pick.', 'blueworx-labs-deck-builder' ),
+							'fields'  => [
+								[ 'id' => 'post_title', 'kind' => 'title', 'label' => __( 'Name', 'blueworx-labs-deck-builder' ), 'required' => true ],
+								[
+									'id'      => 'entry_type',
+									'kind'    => 'select',
+									'label'   => __( 'Entry type', 'blueworx-labs-deck-builder' ),
+									'options' => [
+										[ 'value' => Blueworx_Deck_Builder_Library::SECTION, 'label' => __( 'Section', 'blueworx-labs-deck-builder' ) ],
+										[ 'value' => Blueworx_Deck_Builder_Library::LINE_ITEM, 'label' => __( 'Line item', 'blueworx-labs-deck-builder' ) ],
+									],
+									'default' => Blueworx_Deck_Builder_Library::SECTION,
+								],
+							],
+						],
+						[
 							'id'      => 'content',
 							'eyebrow' => 'Library · Section',
 							'title'   => __( 'The section', 'blueworx-labs-deck-builder' ),
 							'note'    => __( 'What gets inserted when somebody adds this to a deck.', 'blueworx-labs-deck-builder' ),
 							'fields'  => [
-								[ 'id' => 'post_title', 'kind' => 'title', 'label' => __( 'Name', 'blueworx-labs-deck-builder' ), 'required' => true ],
-								[ 'id' => 'kind', 'kind' => 'select', 'label' => __( 'Section type', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Types::section_kinds() ],
-								[ 'id' => 'note', 'kind' => 'text', 'label' => __( 'Builder note', 'blueworx-labs-deck-builder' ), 'help' => __( 'The 12px line under the name in the sections list.', 'blueworx-labs-deck-builder' ) ],
-								[ 'id' => 'eyebrow', 'kind' => 'text', 'label' => __( 'Eyebrow', 'blueworx-labs-deck-builder' ) ],
-								[ 'id' => 'body', 'kind' => 'textarea', 'label' => __( 'Body', 'blueworx-labs-deck-builder' ), 'wide' => true ],
-								[ 'id' => 'points', 'kind' => 'textarea', 'label' => __( 'Key points', 'blueworx-labs-deck-builder' ), 'wide' => true, 'help' => __( 'One per line.', 'blueworx-labs-deck-builder' ) ],
-								[ 'id' => 'strap', 'kind' => 'text', 'label' => __( 'Strapline', 'blueworx-labs-deck-builder' ) ],
+								[ 'depends_on' => self::SHOWN_FOR_SECTION, 'id' => 'kind', 'kind' => 'select', 'label' => __( 'Section type', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Types::section_kinds() ],
+								[ 'depends_on' => self::SHOWN_FOR_SECTION, 'id' => 'note', 'kind' => 'text', 'label' => __( 'Builder note', 'blueworx-labs-deck-builder' ), 'help' => __( 'The small line under the name in the sections list.', 'blueworx-labs-deck-builder' ) ],
+								[ 'depends_on' => self::SHOWN_FOR_SECTION, 'id' => 'eyebrow', 'kind' => 'text', 'label' => __( 'Eyebrow', 'blueworx-labs-deck-builder' ) ],
+								[ 'depends_on' => self::SHOWN_FOR_SECTION, 'id' => 'body', 'kind' => 'textarea', 'label' => __( 'Body', 'blueworx-labs-deck-builder' ), 'wide' => true ],
+								[ 'depends_on' => self::SHOWN_FOR_SECTION, 'id' => 'points', 'kind' => 'textarea', 'label' => __( 'Key points', 'blueworx-labs-deck-builder' ), 'wide' => true, 'help' => __( 'One per line.', 'blueworx-labs-deck-builder' ) ],
+								[ 'depends_on' => self::SHOWN_FOR_SECTION, 'id' => 'strap', 'kind' => 'text', 'label' => __( 'Strapline', 'blueworx-labs-deck-builder' ) ],
+							],
+						],
+						[
+							'id'      => 'work',
+							'eyebrow' => 'Library · Line item',
+							'title'   => __( 'The line item', 'blueworx-labs-deck-builder' ),
+							'note'    => __( 'Work you quote often. Its phase and hours come with it; the internal note never does.', 'blueworx-labs-deck-builder' ),
+							'fields'  => [
+								[ 'depends_on' => self::SHOWN_FOR_LINE_ITEM, 'id' => 'desc', 'kind' => 'text', 'label' => __( 'Description', 'blueworx-labs-deck-builder' ), 'wide' => true ],
+								[ 'depends_on' => self::SHOWN_FOR_LINE_ITEM, 'id' => 'phase', 'kind' => 'select', 'label' => __( 'Phase', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Types::project_phases(), 'help' => __( 'Post-launch lists group by their own phases, so a row landing there may need its phase set again.', 'blueworx-labs-deck-builder' ) ],
+								[ 'depends_on' => self::SHOWN_FOR_LINE_ITEM, 'id' => 'hours', 'kind' => 'number', 'label' => __( 'Hours', 'blueworx-labs-deck-builder' ), 'min' => 0 ],
 							],
 						],
 					],
@@ -751,7 +914,7 @@ final class Blueworx_Deck_Builder_Editor {
 				'order'       => 'ASC',
 			]
 		);
-		$out = [];
+		$out   = [];
 		foreach ( $posts as $post ) {
 			$out[] = [ 'value' => (string) $post->ID, 'label' => $post->post_title ];
 		}

@@ -334,9 +334,9 @@ class Blueworx_Deck_Builder_Admin {
 	/**
 	 * Open a screen: the wrapper, the page header and the start of the body.
 	 *
-	 * @param string                    $eyebrow Eyebrow above the title.
-	 * @param string                    $title   Page title.
-	 * @param string                    $lede    One-line description.
+	 * @param string                          $eyebrow Eyebrow above the title.
+	 * @param string                          $title   Page title.
+	 * @param string                          $lede    One-line description.
 	 * @param array<int,array<string,string>> $actions Buttons, right-aligned.
 	 * @return void
 	 */
@@ -409,11 +409,11 @@ class Blueworx_Deck_Builder_Admin {
 	 * @param string              $label  Button label.
 	 * @param string              $action Action name.
 	 * @param int                 $id     Record id.
-	 * @param string              $class  Button classes.
+	 * @param string              $css    Button classes.
 	 * @param array<string,mixed> $extra  Extra hidden fields.
 	 * @return void
 	 */
-	public static function action_button( $label, $action, $id, $class = 'bw-btn bw-btn--secondary bw-btn--sm', array $extra = [] ) {
+	public static function action_button( $label, $action, $id, $css = 'bw-btn bw-btn--secondary bw-btn--sm', array $extra = [] ) {
 		?>
 		<form class="bw-rowactions__link" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'blueworx_deck_action' ); ?>
@@ -423,7 +423,7 @@ class Blueworx_Deck_Builder_Admin {
 			<?php foreach ( $extra as $name => $value ) : ?>
 				<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( (string) $value ); ?>" />
 			<?php endforeach; ?>
-			<button type="submit" class="<?php echo esc_attr( $class ); ?>"><?php echo esc_html( $label ); ?></button>
+			<button type="submit" class="<?php echo esc_attr( $css ); ?>"><?php echo esc_html( $label ); ?></button>
 		</form>
 		<?php
 	}

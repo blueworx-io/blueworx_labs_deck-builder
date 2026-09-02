@@ -6,6 +6,27 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-02
+
+### Added
+
+- Build a deck from things you have written before: tick a section or a line
+  item from the content library, save, and it is copied into the deck. The
+  copy is the deck's own, so editing it there leaves the library alone.
+- Keep a line item for next time. Turn on "Save to library" on any estimate
+  row and saving files it in the library, without its internal note.
+- The content library now holds line items as well as sections, and a fresh
+  install starts with six of the ones that turn up on most quotes.
+- See the client deck without leaving the builder: the share tab frames the
+  real page at desktop, tablet and phone widths. A deck can be checked this
+  way before it is ever published.
+
+### Changed
+
+- The plugin is listed in WordPress as "BlueWorx Labs | Deck Builder".
+- The two "in package" figures above the tabs are now one, because that is
+  the single number the package recommendation is worked out from.
+
 ## [0.2.0] - 2026-09-02
 
 ### Added
@@ -45,6 +66,7 @@ All notable changes to this plugin are recorded here. The format is
   each new version from wp-admin.
 - `npm run build:zip` builds and verifies the installable plugin zip.
 
-[Unreleased]: https://github.com/blueworx-io/blueworx_labs_deck-builder/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/blueworx-io/blueworx_labs_deck-builder/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.3.0
 [0.2.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.2.0
 [0.1.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.1.0

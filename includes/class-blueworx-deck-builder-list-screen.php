@@ -102,13 +102,18 @@ final class Blueworx_Deck_Builder_List_Screen {
 		$kinds = wp_list_pluck( Blueworx_Deck_Builder_Types::section_kinds(), 'label', 'value' );
 		$rows  = [];
 		foreach ( self::records( Blueworx_Deck_Builder_Types::LIBRARY ) as $post ) {
-			$kind   = (string) get_post_meta( $post->ID, 'bw_library_item_kind', true );
-			$rows[] = [
+			$kind      = (string) get_post_meta( $post->ID, 'bw_library_item_kind', true );
+			$line_item = Blueworx_Deck_Builder_Library::LINE_ITEM === Blueworx_Deck_Builder_Library::type_of( $post->ID );
+			$rows[]    = [
 				'id'    => $post->ID,
 				'name'  => $post->post_title,
-				'note'  => (string) get_post_meta( $post->ID, 'bw_library_item_note', true ),
-				'type'  => $kinds[ $kind ] ?? __( 'Section', 'blueworx-labs-deck-builder' ),
-				'used'  => '',
+				'note'  => $line_item
+					? (string) get_post_meta( $post->ID, 'bw_library_item_desc', true )
+					: (string) get_post_meta( $post->ID, 'bw_library_item_note', true ),
+				'type'  => $line_item
+					? __( 'Line item', 'blueworx-labs-deck-builder' )
+					: ( $kinds[ $kind ] ?? __( 'Section', 'blueworx-labs-deck-builder' ) ),
+				'used'  => $line_item ? sprintf( '%s hrs', (string) get_post_meta( $post->ID, 'bw_library_item_hours', true ) ) : '',
 				'badge' => null,
 			];
 		}
@@ -117,13 +122,13 @@ final class Blueworx_Deck_Builder_List_Screen {
 			[
 				'eyebrow'  => __( 'Deck Builder', 'blueworx-labs-deck-builder' ),
 				'title'    => __( 'Content library', 'blueworx-labs-deck-builder' ),
-				'lede'     => __( 'Reusable sections. Editing one inside a deck makes a copy and leaves the library entry alone.', 'blueworx-labs-deck-builder' ),
-				'add'      => __( 'Add section', 'blueworx-labs-deck-builder' ),
+				'lede'     => __( 'Reusable sections and line items. Editing one inside a deck makes a copy and leaves the library entry alone.', 'blueworx-labs-deck-builder' ),
+				'add'      => __( 'Add entry', 'blueworx-labs-deck-builder' ),
 				'action'   => 'new_library_item',
 				'back'     => Blueworx_Deck_Builder_Admin::PAGE_SLUG . '-library',
 				'screen'   => Blueworx_Deck_Builder_Editor::LIBRARY_SCREEN,
 				'empty'    => __( 'The library is empty', 'blueworx-labs-deck-builder' ),
-				'emptyMsg' => __( 'Add the sections you reuse across decks, so a blank deck has something to be built from.', 'blueworx-labs-deck-builder' ),
+				'emptyMsg' => __( 'Add the sections and line items you reuse across decks, so a blank deck has something to be built from.', 'blueworx-labs-deck-builder' ),
 				'icon'     => 'library',
 				'column'   => __( 'Type', 'blueworx-labs-deck-builder' ),
 				'rows'     => $rows,

@@ -15,10 +15,10 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Blueworx_Deck_Builder_Types {
 
-	const DECK        = 'bw_deck';
-	const PACKAGE     = 'bw_deck_package';
-	const CASE_STUDY  = 'bw_case_study';
-	const LIBRARY     = 'bw_library_item';
+	const DECK       = 'bw_deck';
+	const PACKAGE    = 'bw_deck_package';
+	const CASE_STUDY = 'bw_case_study';
+	const LIBRARY    = 'bw_library_item';
 
 	/**
 	 * Boot.
@@ -111,17 +111,17 @@ final class Blueworx_Deck_Builder_Types {
 	 */
 	public static function section_kinds() {
 		return [
-			[ 'value' => 'cover',      'label' => 'Cover' ],
-			[ 'value' => 'what',       'label' => 'What we do' ],
-			[ 'value' => 'service',    'label' => 'Service detail' ],
-			[ 'value' => 'estimate',   'label' => 'Estimate summary' ],
-			[ 'value' => 'package',    'label' => 'Recommended support package' ],
-			[ 'value' => 'timeline',   'label' => 'Project timeline' ],
+			[ 'value' => 'cover', 'label' => 'Cover' ],
+			[ 'value' => 'what', 'label' => 'What we do' ],
+			[ 'value' => 'service', 'label' => 'Service detail' ],
+			[ 'value' => 'estimate', 'label' => 'Estimate summary' ],
+			[ 'value' => 'package', 'label' => 'Recommended support package' ],
+			[ 'value' => 'timeline', 'label' => 'Project timeline' ],
 			[ 'value' => 'postlaunch', 'label' => 'Post-launch work' ],
-			[ 'value' => 'process',    'label' => 'Our process' ],
-			[ 'value' => 'projects',   'label' => 'Past projects intro' ],
-			[ 'value' => 'casestudy',  'label' => 'Case study' ],
-			[ 'value' => 'cta',        'label' => 'Call to action' ],
+			[ 'value' => 'process', 'label' => 'Our process' ],
+			[ 'value' => 'projects', 'label' => 'Past projects intro' ],
+			[ 'value' => 'casestudy', 'label' => 'Case study' ],
+			[ 'value' => 'cta', 'label' => 'Call to action' ],
 		];
 	}
 

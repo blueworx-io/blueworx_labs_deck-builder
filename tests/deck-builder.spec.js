@@ -15,7 +15,7 @@ test('a new retainer deck arrives with an estimate, a timeline and its own clien
   // list both loaded and both know which rows count.
   await expect(page.locator('.bw-summary__cell').first()).toContainText('232');
   await expect(page.locator('.bw-summary__cell').nth(1)).toContainText('64');
-  await expect(page.locator('.bw-summary__cell').nth(4)).toContainText('8');
+  await expect(page.locator('.bw-summary__cell').nth(3)).toContainText('8');
 
   // A deck is not usable without a link, and a link is minted on create — not
   // on publish, and never from the record id.
@@ -30,7 +30,7 @@ test('a blank deck starts genuinely empty', async ({ page }) => {
 
   await openEditor(page, id);
   await expect(page.locator('.bw-summary__cell').first()).toContainText('0');
-  await expect(page.locator('.bw-summary__cell').nth(4)).toContainText('0');
+  await expect(page.locator('.bw-summary__cell').nth(3)).toContainText('0');
 });
 
 test('the estimate groups its rows by phase and subtotals each group', async ({ page }) => {

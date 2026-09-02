@@ -293,7 +293,7 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 			$live  += $deck->link_live() ? 1 : 0;
 			$hours += $deck->project_total();
 			if ( 'CUSTOM' === $deck->recommendation()['state'] ) {
-				$attention++;
+				++$attention;
 			}
 		}
 

@@ -72,7 +72,7 @@ final class Blueworx_Deck_Builder_Packages {
 		$hours_raw = get_post_meta( $post->ID, 'bw_deck_package_hours', true );
 		$prices    = [];
 		foreach ( array_keys( Blueworx_Deck_Builder_Types::currencies() ) as $code ) {
-			$raw               = get_post_meta( $post->ID, 'bw_deck_package_price_' . strtolower( $code ), true );
+			$raw             = get_post_meta( $post->ID, 'bw_deck_package_price_' . strtolower( $code ), true );
 			$prices[ $code ] = ( '' === $raw || null === $raw ) ? null : (float) $raw;
 		}
 
@@ -161,12 +161,12 @@ final class Blueworx_Deck_Builder_Packages {
 	/**
 	 * Assemble everything a screen needs to explain the recommendation.
 	 *
-	 * @param string                              $state         Rule state.
-	 * @param array<string,mixed>|null            $package       Chosen package.
-	 * @param float                               $package_total Hours to cover.
-	 * @param string                              $currency      Deck currency.
-	 * @param array<string,mixed>|null            $automatic     What the rule said, when overridden.
-	 * @param array<int,array<string,mixed>>      $eligible      Eligible packages.
+	 * @param string                         $state         Rule state.
+	 * @param array<string,mixed>|null       $package       Chosen package.
+	 * @param float                          $package_total Hours to cover.
+	 * @param string                         $currency      Deck currency.
+	 * @param array<string,mixed>|null       $automatic     What the rule said, when overridden.
+	 * @param array<int,array<string,mixed>> $eligible      Eligible packages.
 	 * @return array<string,mixed>
 	 */
 	private static function result( $state, $package, $package_total, $currency, $automatic, array $eligible ) {
@@ -241,8 +241,8 @@ final class Blueworx_Deck_Builder_Packages {
 			}
 		}
 
-		$view              = self::card( $package, $currency );
-		$view['currency']  = $currency;
+		$view                 = self::card( $package, $currency );
+		$view['currency']     = $currency;
 		$view['alternatives'] = $others;
 		return $view;
 	}

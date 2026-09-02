@@ -4,10 +4,10 @@
  *
  * @package Blueworx\DeckBuilder
  *
- * Plugin Name:       Deck Builder
+ * Plugin Name:       BlueWorx Labs | Deck Builder
  * Plugin URI:        https://github.com/blueworx-io/blueworx_labs_deck-builder
  * Description:       Build client decks in wp-admin and publish each one to its own private client link.
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 6.5
  * Requires PHP:      8.2
  * Author:            BlueWorx
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
  * The single version string. Kept equal to the Version: header above and to
  * package.json — CI fails the build if the three disagree.
  */
-define( 'BLUEWORX_DECK_BUILDER_VERSION', '0.2.0' );
+define( 'BLUEWORX_DECK_BUILDER_VERSION', '0.3.0' );
 define( 'BLUEWORX_DECK_BUILDER_FILE', __FILE__ );
 define( 'BLUEWORX_DECK_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BLUEWORX_DECK_BUILDER_URL', plugin_dir_url( __FILE__ ) );
@@ -40,6 +40,7 @@ require_once __DIR__ . '/includes/class-blueworx-deck-builder-types.php';
 require_once __DIR__ . '/includes/class-blueworx-deck-builder-starter.php';
 require_once __DIR__ . '/includes/class-blueworx-deck-builder-packages.php';
 require_once __DIR__ . '/includes/class-blueworx-deck-builder-deck.php';
+require_once __DIR__ . '/includes/class-blueworx-deck-builder-library.php';
 require_once __DIR__ . '/includes/class-blueworx-deck-builder-editor.php';
 require_once __DIR__ . '/includes/class-blueworx-deck-builder-render.php';
 require_once __DIR__ . '/includes/class-blueworx-deck-builder-link.php';

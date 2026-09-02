@@ -116,6 +116,7 @@ final class Blueworx_Deck_Builder_Link {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- a client has no WordPress session to carry a nonce; the password is the check.
 		if ( isset( $_POST['bw_deck_password'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see the note above; there is no session to carry a nonce.
 			$given = sanitize_text_field( wp_unslash( $_POST['bw_deck_password'] ) );
 			if ( hash_equals( $password, $given ) ) {
 				setcookie( self::cookie_name( $deck ), self::cookie_value( $deck ), time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
@@ -125,7 +126,7 @@ final class Blueworx_Deck_Builder_Link {
 		}
 
 		$cookie = self::cookie_name( $deck );
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitised -- compared with hash_equals against a value this plugin wrote; sanitising it would change what is compared.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- compared with hash_equals against a value this plugin wrote; sanitising it would change what is compared.
 		$held = isset( $_COOKIE[ $cookie ] ) ? (string) wp_unslash( $_COOKIE[ $cookie ] ) : '';
 		return '' !== $held && hash_equals( self::cookie_value( $deck ), $held );
 	}

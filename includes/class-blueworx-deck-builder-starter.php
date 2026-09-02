@@ -261,12 +261,12 @@ final class Blueworx_Deck_Builder_Starter {
 	}
 
 	/**
-	 * The reusable sections a blank deck can be built from.
+	 * The reusable sections and line items a blank deck can be built from.
 	 *
 	 * @return void
 	 */
 	private static function seed_library() {
-		$entries = [
+		$sections = [
 			[ 'Cover', 'cover', 'The opening slide.' ],
 			[ 'What we do', 'what', 'Four pillars of the offer.' ],
 			[ 'Service detail', 'service', 'One service, its hours and its points.' ],
@@ -280,19 +280,57 @@ final class Blueworx_Deck_Builder_Starter {
 			[ 'Standard introduction', 'what', 'The introduction we open most decks with.' ],
 		];
 
-		foreach ( $entries as $entry ) {
-			$id = wp_insert_post(
-				[
-					'post_type'   => Blueworx_Deck_Builder_Types::LIBRARY,
-					'post_status' => 'publish',
-					'post_title'  => $entry[0],
-				]
-			);
-			if ( is_wp_error( $id ) || ! $id ) {
+		foreach ( $sections as $entry ) {
+			$id = self::library_entry( $entry[0], Blueworx_Deck_Builder_Library::SECTION );
+			if ( ! $id ) {
 				continue;
 			}
 			update_post_meta( $id, 'bw_library_item_kind', $entry[1] );
 			update_post_meta( $id, 'bw_library_item_note', $entry[2] );
 		}
+
+		// The work that turns up on nearly every quote, so the estimate's own
+		// library picker has something in it on day one rather than an empty
+		// panel that reads as a broken feature.
+		$line_items = [
+			[ 'Accessibility pass', 'Keyboard, contrast and screen reader checks across every template.', 'QA and testing', 12 ],
+			[ 'Analytics and consent', 'Analytics, consent banner and goal tracking.', 'Development', 8 ],
+			[ 'Content migration', 'Moving existing content across, with redirects for every old address.', 'Migration', 24 ],
+			[ 'Performance tuning', 'Image handling, caching and a Core Web Vitals pass.', 'QA and testing', 10 ],
+			[ 'Search engine basics', 'Titles, descriptions, sitemap and structured data.', 'Development', 6 ],
+			[ 'Training session', 'Two hours with the team, recorded, plus a short written guide.', 'Training and handover', 4 ],
+		];
+
+		foreach ( $line_items as $entry ) {
+			$id = self::library_entry( $entry[0], Blueworx_Deck_Builder_Library::LINE_ITEM );
+			if ( ! $id ) {
+				continue;
+			}
+			update_post_meta( $id, 'bw_library_item_desc', $entry[1] );
+			update_post_meta( $id, 'bw_library_item_phase', $entry[2] );
+			update_post_meta( $id, 'bw_library_item_hours', $entry[3] );
+		}
+	}
+
+	/**
+	 * One library entry, made and typed.
+	 *
+	 * @param string $title Entry name.
+	 * @param string $type  Section or line item.
+	 * @return int The new entry id, or 0 when the insert failed.
+	 */
+	private static function library_entry( $title, $type ) {
+		$id = wp_insert_post(
+			[
+				'post_type'   => Blueworx_Deck_Builder_Types::LIBRARY,
+				'post_status' => 'publish',
+				'post_title'  => $title,
+			]
+		);
+		if ( is_wp_error( $id ) || ! $id ) {
+			return 0;
+		}
+		update_post_meta( (int) $id, 'bw_library_item_entry_type', $type );
+		return (int) $id;
 	}
 }
