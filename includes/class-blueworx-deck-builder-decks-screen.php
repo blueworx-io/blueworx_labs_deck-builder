@@ -332,6 +332,7 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 			'restored'   => [ 'success', 'circle-check', __( 'Deck restored', 'blueworx-labs-deck-builder' ), __( 'It is back in the list, and its link works again once it is published.', 'blueworx-labs-deck-builder' ) ],
 			'duplicated' => [ 'success', 'copy', __( 'Deck duplicated', 'blueworx-labs-deck-builder' ), __( 'The copy is a draft with its own client link.', 'blueworx-labs-deck-builder' ) ],
 			'deleted'    => [ 'info', 'trash-2', __( 'Deleted', 'blueworx-labs-deck-builder' ), __( 'That record has been removed.', 'blueworx-labs-deck-builder' ) ],
+			'missing'    => [ 'warning', 'triangle-alert', __( 'That deck could not be found', 'blueworx-labs-deck-builder' ), __( 'Nothing was changed. It may have been deleted in another tab.', 'blueworx-labs-deck-builder' ) ],
 		];
 		if ( isset( $messages[ $done ] ) ) {
 			Blueworx_Deck_Builder_Admin::notice( $messages[ $done ][0], $messages[ $done ][1], $messages[ $done ][2], $messages[ $done ][3] );
@@ -493,11 +494,22 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 				}
 				return add_query_arg( 'done', 'published', $decks );
 
+			// Both of these look up the deck first, and do nothing when the id
+			// is not one. They took the id on trust while only an
+			// administrator could reach this handler, which made it academic;
+			// a sales agent can reach it now, and an id nobody checked is a
+			// way to write plugin meta onto any post on the site.
 			case 'archive':
+				if ( null === Blueworx_Deck_Builder_Deck::find( $id ) ) {
+					return add_query_arg( 'done', 'missing', $decks );
+				}
 				update_post_meta( $id, 'bw_deck_archived', true );
 				return add_query_arg( 'done', 'archived', $decks );
 
 			case 'restore':
+				if ( null === Blueworx_Deck_Builder_Deck::find( $id ) ) {
+					return add_query_arg( 'done', 'missing', $decks );
+				}
 				delete_post_meta( $id, 'bw_deck_archived' );
 				return add_query_arg( 'done', 'restored', $decks );
 

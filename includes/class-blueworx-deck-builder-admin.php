@@ -25,11 +25,13 @@ class Blueworx_Deck_Builder_Admin {
 	const PAGE_SLUG = 'blueworx-labs-deck-builder';
 
 	/**
-	 * The capability required to open any of these screens.
+	 * The capability required to open any of these screens. Defined once, in
+	 * Blueworx_Deck_Builder_Roles, and named here so every screen in this
+	 * plugin keeps reading it from the same place.
 	 *
 	 * @var string
 	 */
-	const CAPABILITY = 'manage_options';
+	const CAPABILITY = Blueworx_Deck_Builder_Roles::CAPABILITY;
 
 	/**
 	 * The single instance.
