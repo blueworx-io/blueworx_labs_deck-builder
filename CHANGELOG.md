@@ -6,6 +6,20 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-02
+
+### Fixed
+
+- Four icons were missing from the design system, so they drew nothing at all:
+  the link on the “Live client links” tile, the two content library and
+  package empty states, and the device buttons on the deck preview.
+
+### Changed
+
+- The Deck Builder menu item carries a BlueWorx icon rather than a WordPress
+  one. It does not brighten on hover the way WordPress's own icons do —
+  WordPress paints it as a background image, which cannot take a colour.
+
 ## [0.4.0] - 2026-09-02
 
 ### Added
@@ -90,7 +104,8 @@ link, with no WordPress account needed.
   each new version from wp-admin.
 - `npm run build:zip` builds and verifies the installable plugin zip.
 
-[Unreleased]: https://github.com/blueworx-io/blueworx_labs_deck-builder/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/blueworx-io/blueworx_labs_deck-builder/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.4.1
 [0.4.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.4.0
 [0.3.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.3.0
 [0.2.0]: https://github.com/blueworx-io/blueworx_labs_deck-builder/releases/tag/v0.2.0

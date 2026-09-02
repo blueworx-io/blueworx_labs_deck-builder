@@ -74,10 +74,12 @@ test('an editor cannot reach the deck builder at all', async ({ page, browser })
 test('a locked builder does not lock the client link', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Halstead Dairy', title: 'Farm shop' });
 
+  // The row shows the client and the title, never the record id — so it is
+  // found by client, newest first, and never by falling back to whatever
+  // happens to be at the top of the list.
   await page.goto(DECKS);
-  const row = page.locator('.bw-table tbody tr').filter({ hasText: String(id) });
-  const target = (await row.count()) ? row : page.locator('.bw-table tbody tr').first();
-  await target.getByRole('button', { name: 'Publish' }).click();
+  const row = page.locator('.bw-table tbody tr').filter({ hasText: 'Halstead Dairy' }).first();
+  await row.getByRole('button', { name: 'Publish' }).click();
   await expect(page.locator('.bw-notice--success')).toBeVisible();
 
   await openEditor(page, id, 'Preview and share');
