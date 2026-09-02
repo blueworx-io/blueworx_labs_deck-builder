@@ -99,10 +99,8 @@ final class Blueworx_Deck_Builder_List_Screen {
 	 * @return void
 	 */
 	public static function library() {
-		$kinds = wp_list_pluck( Blueworx_Deck_Builder_Types::section_kinds(), 'label', 'value' );
-		$rows  = [];
-		foreach ( self::records( Blueworx_Deck_Builder_Types::LIBRARY ) as $post ) {
-			$kind      = (string) get_post_meta( $post->ID, 'bw_library_item_kind', true );
+		$rows = [];
+		foreach ( self::library_entries() as $post ) {
 			$line_item = Blueworx_Deck_Builder_Library::LINE_ITEM === Blueworx_Deck_Builder_Library::type_of( $post->ID );
 			$rows[]    = [
 				'id'    => $post->ID,
@@ -110,9 +108,7 @@ final class Blueworx_Deck_Builder_List_Screen {
 				'note'  => $line_item
 					? (string) get_post_meta( $post->ID, 'bw_library_item_desc', true )
 					: (string) get_post_meta( $post->ID, 'bw_library_item_note', true ),
-				'type'  => $line_item
-					? __( 'Line item', 'blueworx-labs-deck-builder' )
-					: ( $kinds[ $kind ] ?? __( 'Section', 'blueworx-labs-deck-builder' ) ),
+				'type'  => Blueworx_Deck_Builder_Library::describe( $post->ID ),
 				'used'  => $line_item ? sprintf( '%s hrs', (string) get_post_meta( $post->ID, 'bw_library_item_hours', true ) ) : '',
 				'badge' => null,
 			];
@@ -122,18 +118,37 @@ final class Blueworx_Deck_Builder_List_Screen {
 			[
 				'eyebrow'  => __( 'Deck Builder', 'blueworx-labs-deck-builder' ),
 				'title'    => __( 'Content library', 'blueworx-labs-deck-builder' ),
-				'lede'     => __( 'Reusable sections and line items. Editing one inside a deck makes a copy and leaves the library entry alone.', 'blueworx-labs-deck-builder' ),
-				'add'      => __( 'Add entry', 'blueworx-labs-deck-builder' ),
-				'action'   => 'new_library_item',
+				'lede'     => __( 'Everything a deck is made of, written once. Every new deck starts as a copy of this; decks already made keep theirs.', 'blueworx-labs-deck-builder' ),
+				// No add. The library is what the business offers, not a
+				// per-deck scratchpad, so a new entry is a deliberate change
+				// to the product rather than something typed in passing.
+				'add'      => '',
+				'action'   => '',
 				'back'     => Blueworx_Deck_Builder_Admin::PAGE_SLUG . '-library',
 				'screen'   => Blueworx_Deck_Builder_Editor::LIBRARY_SCREEN,
 				'empty'    => __( 'The library is empty', 'blueworx-labs-deck-builder' ),
-				'emptyMsg' => __( 'Add the sections and line items you reuse across decks, so a blank deck has something to be built from.', 'blueworx-labs-deck-builder' ),
+				'emptyMsg' => __( 'Nothing here yet, so a new deck would arrive empty. The library is seeded when the plugin is activated.', 'blueworx-labs-deck-builder' ),
 				'icon'     => 'library',
 				'column'   => __( 'Type', 'blueworx-labs-deck-builder' ),
 				'rows'     => $rows,
 				'notice'   => null,
 			]
+		);
+	}
+
+	/**
+	 * Every library entry, in the order a deck presents them: sections first,
+	 * then each estimate, each list in its own order. The same order the
+	 * entries reach a deck in, so this screen reads as what a new deck will
+	 * be rather than as an alphabetical pile.
+	 *
+	 * @return array<int,WP_Post>
+	 */
+	private static function library_entries() {
+		return array_merge(
+			Blueworx_Deck_Builder_Library::entries( Blueworx_Deck_Builder_Library::SECTION ),
+			Blueworx_Deck_Builder_Library::entries( Blueworx_Deck_Builder_Library::LINE_ITEM, Blueworx_Deck_Builder_Library::LIST_ESTIMATE ),
+			Blueworx_Deck_Builder_Library::entries( Blueworx_Deck_Builder_Library::LINE_ITEM, Blueworx_Deck_Builder_Library::LIST_POSTLAUNCH )
 		);
 	}
 
@@ -195,9 +210,11 @@ final class Blueworx_Deck_Builder_List_Screen {
 							?>
 						</p>
 					</div>
-					<div class="bw-card__actions">
-						<?php Blueworx_Deck_Builder_Admin::action_button( $config['add'], $config['action'], 0, 'bw-btn bw-btn--primary bw-btn--sm' ); ?>
-					</div>
+					<?php if ( '' !== $config['add'] ) : ?>
+						<div class="bw-card__actions">
+							<?php Blueworx_Deck_Builder_Admin::action_button( $config['add'], $config['action'], 0, 'bw-btn bw-btn--primary bw-btn--sm' ); ?>
+						</div>
+					<?php endif; ?>
 				</div>
 
 				<?php if ( ! $config['rows'] ) : ?>
@@ -206,12 +223,15 @@ final class Blueworx_Deck_Builder_List_Screen {
 							<i class="bw-icon bw-icon--28 bw-empty__icon" data-lucide="<?php echo esc_attr( $config['icon'] ); ?>"></i>
 							<h3 class="bw-empty__title"><?php echo esc_html( $config['empty'] ); ?></h3>
 							<p class="bw-empty__text"><?php echo esc_html( $config['emptyMsg'] ); ?></p>
-							<div class="bw-empty__actions">
-								<?php Blueworx_Deck_Builder_Admin::action_button( $config['add'], $config['action'], 0, 'bw-btn bw-btn--primary' ); ?>
-							</div>
+							<?php if ( '' !== $config['add'] ) : ?>
+								<div class="bw-empty__actions">
+									<?php Blueworx_Deck_Builder_Admin::action_button( $config['add'], $config['action'], 0, 'bw-btn bw-btn--primary' ); ?>
+								</div>
+							<?php endif; ?>
 						</div>
 					</div>
 				<?php else : ?>
+					<div class="bw-tablescroll">
 					<table class="bw-table">
 						<thead>
 							<tr>
@@ -255,6 +275,7 @@ final class Blueworx_Deck_Builder_List_Screen {
 							<?php endforeach; ?>
 						</tbody>
 					</table>
+					</div>
 				<?php endif; ?>
 			</section>
 		<?php

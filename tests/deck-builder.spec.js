@@ -7,13 +7,13 @@ test.beforeAll(async ({ browser }) => {
 
 test.use({ storageState: AUTH_STATE });
 
-test('a new retainer deck arrives with an estimate, a timeline and its own client link', async ({ page }) => {
+test('a new deck arrives with an estimate, a timeline and its own client link', async ({ page }) => {
   const id = await createDeck(page, { client: 'Harbour Rowing Club', title: 'Website and support' });
 
   // The summary strip is the deck's own arithmetic, worked out in the browser
   // as somebody types. If these are right, the estimate and the post-launch
   // list both loaded and both know which rows count.
-  await expect(page.locator('.bw-summary__cell').first()).toContainText('232');
+  await expect(page.locator('.bw-summary__cell').first()).toContainText('272');
   await expect(page.locator('.bw-summary__cell').nth(1)).toContainText('64');
   await expect(page.locator('.bw-summary__cell').nth(3)).toContainText('8');
 
@@ -25,12 +25,57 @@ test('a new retainer deck arrives with an estimate, a timeline and its own clien
   await expect(link).not.toHaveValue(new RegExp(String(id)));
 });
 
-test('a blank deck starts genuinely empty', async ({ page }) => {
-  const id = await createDeck(page, { client: 'Northgate Collective', title: 'Discovery brief', start: 'blank' });
+test('there is no starting point left to choose', async ({ page }) => {
+  await page.goto(DECKS);
 
-  await openEditor(page, id);
-  await expect(page.locator('.bw-summary__cell').first()).toContainText('0');
-  await expect(page.locator('.bw-summary__cell').nth(3)).toContainText('0');
+  // One button, and it makes the deck rather than opening a form. The old
+  // create screen is gone, and so is the column and the filter that asked
+  // which of two starting points a deck had used.
+  await expect(page.locator('.bw-pagehead__actions a.bw-btn--primary')).toHaveText(/Create new deck/);
+  await expect(page.locator('select[name="start"]')).toHaveCount(0);
+  await expect(page.locator('.bw-table thead')).not.toContainText('Starting point');
+
+  await page.goto('/wp-admin/admin.php?page=blueworx-labs-deck-builder-create');
+  await expect(page.locator('.bw-radiogroup')).toHaveCount(0);
+});
+
+test('the actions column is headed, and the table scrolls rather than overflowing', async ({ page }) => {
+  await createDeck(page, { client: 'Northgate Collective', title: 'Discovery brief' });
+  await page.goto(DECKS);
+
+  // The header shares a class with the row actions, which fade in on hover.
+  // Left as it was, the column had no readable heading at all.
+  const header = page.locator('.bw-table thead th.bw-table__actions');
+  await expect(header).toHaveText('Actions');
+  await expect(header).toHaveCSS('opacity', '1');
+
+  // Narrow enough that the actions would otherwise sit outside the card.
+  await page.setViewportSize({ width: 900, height: 800 });
+  const scroller = page.locator('.bw-tablescroll');
+  await expect(scroller).toHaveCSS('overflow-x', 'auto');
+
+  const overflow = await scroller.evaluate((el) => ({
+    inside: el.scrollWidth > el.clientWidth ? el.scrollLeft >= 0 : true,
+    bodyScrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  }));
+  expect(overflow.inside).toBe(true);
+  expect(overflow.bodyScrolls).toBe(false);
+});
+
+test('a dropdown draws one arrow, not two', async ({ page }) => {
+  await page.goto(DECKS);
+
+  // WordPress puts its own chevron on every select in wp-admin as a
+  // background image, beside the design system's own. It also caps a select
+  // at 25rem, which is what pushed the second arrow clear of the field.
+  const select = page.locator('.bw-select .bw-select__el').first();
+  await expect(select).toHaveCSS('background-image', 'none');
+
+  const fits = await select.evaluate((el) => {
+    const wrap = el.closest('.bw-select');
+    return Math.abs(el.getBoundingClientRect().width - wrap.getBoundingClientRect().width) < 1;
+  });
+  expect(fits).toBe(true);
 });
 
 test('the estimate groups its rows by phase and subtotals each group', async ({ page }) => {
@@ -40,8 +85,8 @@ test('the estimate groups its rows by phase and subtotals each group', async ({ 
   const groups = page.locator('.bw-repeater .bw-table__group-title, .bw-repeater__group');
   await expect(groups.first()).toBeVisible();
 
-  // Discovery is one 12-hour line item in the retainer set, so its group
-  // header has to say 12 — a subtotal that ignored the group would say 232.
+  // Discovery is one 12-hour line item in the library, so its group header
+  // has to say 12 — a subtotal that ignored the group would say 272.
   await expect(page.getByText('12 hrs').first()).toBeVisible();
 });
 
@@ -53,12 +98,12 @@ test('changing hours moves the total, and the change survives a save', async ({ 
   await hours.fill('20');
   await hours.blur();
 
-  // 232 with Discovery at 12; 240 with it at 20.
-  await expect(page.locator('.bw-summary__cell').first()).toContainText('240');
+  // 272 with Discovery at 12; 280 with it at 20.
+  await expect(page.locator('.bw-summary__cell').first()).toContainText('280');
 
   await save(page);
   await page.reload();
-  await expect(page.locator('.bw-summary__cell').first()).toContainText('240');
+  await expect(page.locator('.bw-summary__cell').first()).toContainText('280');
 });
 
 test('the timeline saves as a list of phases rather than as text', async ({ page }) => {
@@ -90,14 +135,14 @@ test('the deck recommends the smallest package that covers the work', async ({ p
   const id = await createDeck(page, { client: 'Pennine Legal', title: 'Firm website' });
   await openEditor(page, id, 'Support package');
 
-  // 232 project hours plus 64 post-launch is 296, which Care (120) and Core
+  // 272 project hours plus 64 post-launch is 336, which Care (120) and Core
   // (240) cannot cover and Core Plus (360) can.
   const panel = page.locator('.bw-card').filter({ hasText: 'In calculation' });
-  await expect(panel).toContainText('296');
+  await expect(panel).toContainText('336');
   await expect(panel).toContainText('Core Plus');
 
   // The remaining capacity has to be the difference, not the package's hours.
-  await expect(panel).toContainText('64');
+  await expect(panel).toContainText('24');
 });
 
 test('the decks dashboard counts what is there and filters it', async ({ page }) => {

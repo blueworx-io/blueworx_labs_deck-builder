@@ -1,6 +1,6 @@
 <?php
 /**
- * The retainer starting point, and what a fresh install begins with.
+ * What a fresh install begins with, and the one list a deck does not copy.
  *
  * @package Blueworx\DeckBuilder
  */
@@ -8,139 +8,32 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A deck built from the retainer template starts with the standard set of
- * sections, a project estimate, post-launch work and a timeline. Everything
- * here is a starting point and every line of it is editable per deck — nothing
- * in this file is referenced again once a deck has been created.
+ * A new deck is a copy of the content library — see
+ * Blueworx_Deck_Builder_Library. The only thing this class still authors is
+ * the timeline, which has no library behind it because a schedule is weeks and
+ * milestones rather than reusable content.
+ *
+ * The rest of the file is the seed: the packages, case studies and library
+ * entries a fresh install needs before anything here is usable at all.
  */
 final class Blueworx_Deck_Builder_Starter {
 
 	/**
-	 * Load the retainer set onto a deck.
+	 * Load a new deck's starting content.
 	 *
 	 * @param int $deck_id Deck post id.
 	 * @return void
 	 */
 	public static function load_into( $deck_id ) {
-		update_post_meta( $deck_id, 'bw_deck_sections', self::sections() );
-		update_post_meta( $deck_id, 'bw_deck_estimate', self::estimate() );
-		update_post_meta( $deck_id, 'bw_deck_postlaunch', self::postlaunch() );
+		foreach ( Blueworx_Deck_Builder_Library::starting_lists() as $list => $rows ) {
+			update_post_meta( $deck_id, 'bw_deck_' . $list, $rows );
+		}
 		update_post_meta( $deck_id, 'bw_deck_timeline', self::timeline() );
 	}
 
 	/**
-	 * The retainer deck's sections, in presentation order.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	public static function sections() {
-		$rows = [
-			[ 'cover', 'Cover', 'Integrated', 'The opening slide: client, title and the date this was prepared.' ],
-			[ 'what', 'What we do', 'Our work', 'Four pillars of what BlueWorx does for a client.' ],
-			[ 'service', 'Design services', 'Design', 'Design-first. Every time.' ],
-			[ 'service', 'Development services', 'Development', 'Built to scale. Built to last.' ],
-			[ 'service', 'Support services', 'Support', 'Always on. Always with you.' ],
-			[ 'service', 'Hosting services', 'Hosting', 'Fast, secure, always available.' ],
-			[ 'estimate', 'Estimate summary', 'Investment', 'Generated from the project estimate.' ],
-			[ 'package', 'Recommended support package', 'Support', 'Generated from the package calculation.' ],
-			[ 'timeline', 'Project timeline', 'Schedule', 'Generated from the timeline tab.' ],
-			[ 'postlaunch', 'Post-launch work', 'After launch', 'Generated from the post-launch estimate.' ],
-			[ 'process', 'Our process', 'How we work', 'Discovery, design, development, launch, support.' ],
-			[ 'projects', 'Past projects', 'Selected work', 'The lead-in to the case studies.' ],
-			[ 'casestudy', 'Case studies', 'Our work', 'One slide per case study chosen on the Overview tab.' ],
-			[ 'cta', "Let's build something great.", 'Next step', 'The closing slide, and how to get in touch.' ],
-		];
-
-		$out = [];
-		foreach ( $rows as $row ) {
-			$out[] = [
-				'kind'    => $row[0],
-				'title'   => $row[1],
-				'eyebrow' => $row[2],
-				'note'    => $row[3],
-				'body'    => '',
-				'points'  => '',
-				'hours'   => 0,
-				'strap'   => '',
-				'visible' => true,
-			];
-		}
-		return $out;
-	}
-
-	/**
-	 * A starting project estimate.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	public static function estimate() {
-		return self::items(
-			[
-				[ 'Discovery', 'Discovery workshop', 'A working session to agree scope, audience and success.', 12 ],
-				[ 'Research', 'Competitor and sector review', 'What the sector does well, and where there is room.', 8 ],
-				[ 'Strategy', 'Content and messaging strategy', 'What the site says, and in what order.', 10 ],
-				[ 'UX and wireframes', 'Wireframes for every template', 'Every page type, agreed before any design.', 24 ],
-				[ 'UI design', 'Design system and key pages', 'The look, built as reusable parts rather than pictures.', 30 ],
-				[ 'Development', 'Build the site as a plugin', 'Templates, components and the editing experience.', 80 ],
-				[ 'Integrations', 'Forms, analytics and mail', 'The third-party pieces, wired up and tested.', 14 ],
-				[ 'Migration', 'Move existing content', 'Bringing across what is worth keeping.', 12 ],
-				[ 'QA and testing', 'Cross-browser and device testing', 'Every template, on every size that matters.', 18 ],
-				[ 'Project management', 'Weekly delivery management', 'Running the project, start to finish.', 16 ],
-				[ 'Launch and deployment', 'Go live', 'DNS, certificates, redirects and the switch itself.', 8 ],
-			]
-		);
-	}
-
-	/**
-	 * A starting post-launch estimate.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	public static function postlaunch() {
-		return self::items(
-			[
-				[ 'Launch monitoring', 'First month monitoring', 'Watching the site closely while real traffic arrives.', 10 ],
-				[ 'Content updates', 'Monthly content changes', 'The ordinary run of copy and image updates.', 12 ],
-				[ 'Performance optimisation', 'Speed and Core Web Vitals', 'Keeping the site quick as it grows.', 10 ],
-				[ 'Search optimisation', 'Search and structured data', 'Making sure the work is findable.', 8 ],
-				[ 'Feature improvements', 'Small improvements', 'The things that only become obvious once it is live.', 14 ],
-				[ 'Support and maintenance', 'Updates and backups', 'Keeping everything current and recoverable.', 10 ],
-			]
-		);
-	}
-
-	/**
-	 * Turn a compact list into line items with all three switches on.
-	 *
-	 * Everything starts included — in the total, shown to the client and
-	 * counted towards the support package. Taking a line out is a decision
-	 * somebody makes about this client; leaving work out of the package
-	 * calculation by default would quietly under-state what the retainer has
-	 * to cover, which is the one answer that must never happen by accident.
-	 *
-	 * @param array<int,array<int,mixed>> $rows Phase, title, description, hours.
-	 * @return array<int,array<string,mixed>>
-	 */
-	private static function items( array $rows ) {
-		$out = [];
-		foreach ( $rows as $row ) {
-			$out[] = [
-				'title'       => $row[1],
-				'desc'        => $row[2],
-				'phase'       => $row[0],
-				'hours'       => $row[3],
-				'note'        => '',
-				'in_total'    => true,
-				'show_client' => true,
-				'in_package'  => true,
-			];
-		}
-		return $out;
-	}
-
-	/**
-	 * The default timeline. Weeks are authored, never derived from the hours
-	 * above — a schedule is what the team can actually do.
+	 * The default timeline. Weeks are authored, never derived from estimated
+	 * hours — a schedule is what the team can actually do.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -261,51 +154,93 @@ final class Blueworx_Deck_Builder_Starter {
 	}
 
 	/**
-	 * The reusable sections and line items a blank deck can be built from.
+	 * Everything a deck is made of, written down once.
+	 *
+	 * This is the standard retainer deck: it used to be a second, hardcoded
+	 * list that only a "retainer" deck ever saw, which meant the library and
+	 * the deck disagreed about what the business actually offers. There is one
+	 * list now, and it is this one.
 	 *
 	 * @return void
 	 */
 	private static function seed_library() {
+		// Order is the order of the presentation, so it is written here rather
+		// than left to the title — alphabetical would open every deck on the
+		// call to action.
 		$sections = [
-			[ 'Cover', 'cover', 'The opening slide.' ],
-			[ 'What we do', 'what', 'Four pillars of the offer.' ],
-			[ 'Service detail', 'service', 'One service, its hours and its points.' ],
-			[ 'Estimate summary', 'estimate', 'Generated from the project estimate.' ],
-			[ 'Recommended support package', 'package', 'Generated from the package calculation.' ],
-			[ 'Project timeline', 'timeline', 'Generated from the timeline tab.' ],
-			[ 'Post-launch work', 'postlaunch', 'Generated from the post-launch estimate.' ],
-			[ 'Our process', 'process', 'Discovery to support, in five steps.' ],
-			[ 'Past projects intro', 'projects', 'The lead-in to the case studies.' ],
-			[ 'Call to action', 'cta', 'How to get in touch.' ],
-			[ 'Standard introduction', 'what', 'The introduction we open most decks with.' ],
+			[ 'Cover', 'cover', 'Integrated', 'The opening slide: client, title and the date this was prepared.' ],
+			[ 'What we do', 'what', 'Our work', 'Four pillars of what BlueWorx does for a client.' ],
+			[ 'Design services', 'service', 'Design', 'Design-first. Every time.' ],
+			[ 'Development services', 'service', 'Development', 'Built to scale. Built to last.' ],
+			[ 'Support services', 'service', 'Support', 'Always on. Always with you.' ],
+			[ 'Hosting services', 'service', 'Hosting', 'Fast, secure, always available.' ],
+			[ 'Estimate summary', 'estimate', 'Investment', 'Generated from the project estimate.' ],
+			[ 'Recommended support package', 'package', 'Support', 'Generated from the package calculation.' ],
+			[ 'Project timeline', 'timeline', 'Schedule', 'Generated from the timeline tab.' ],
+			[ 'Post-launch work', 'postlaunch', 'After launch', 'Generated from the post-launch estimate.' ],
+			[ 'Our process', 'process', 'How we work', 'Discovery, design, development, launch, support.' ],
+			[ 'Past projects', 'projects', 'Selected work', 'The lead-in to the case studies.' ],
+			[ 'Case studies', 'casestudy', 'Our work', 'One slide per case study chosen on the Overview tab.' ],
+			[ "Let's build something great.", 'cta', 'Next step', 'The closing slide, and how to get in touch.' ],
 		];
 
-		foreach ( $sections as $entry ) {
-			$id = self::library_entry( $entry[0], Blueworx_Deck_Builder_Library::SECTION );
+		foreach ( $sections as $index => $entry ) {
+			$id = self::library_entry( $entry[0], Blueworx_Deck_Builder_Library::SECTION, ( $index + 1 ) * 10 );
 			if ( ! $id ) {
 				continue;
 			}
 			update_post_meta( $id, 'bw_library_item_kind', $entry[1] );
-			update_post_meta( $id, 'bw_library_item_note', $entry[2] );
+			update_post_meta( $id, 'bw_library_item_eyebrow', $entry[2] );
+			update_post_meta( $id, 'bw_library_item_note', $entry[3] );
 		}
 
-		// The work that turns up on nearly every quote, so the estimate's own
-		// library picker has something in it on day one rather than an empty
-		// panel that reads as a broken feature.
-		$line_items = [
-			[ 'Accessibility pass', 'Keyboard, contrast and screen reader checks across every template.', 'QA and testing', 12 ],
-			[ 'Analytics and consent', 'Analytics, consent banner and goal tracking.', 'Development', 8 ],
-			[ 'Content migration', 'Moving existing content across, with redirects for every old address.', 'Migration', 24 ],
-			[ 'Performance tuning', 'Image handling, caching and a Core Web Vitals pass.', 'QA and testing', 10 ],
+		$project = [
+			[ 'Discovery workshop', 'A working session to agree scope, audience and success.', 'Discovery', 12 ],
+			[ 'Competitor and sector review', 'What the sector does well, and where there is room.', 'Research', 8 ],
+			[ 'Content and messaging strategy', 'What the site says, and in what order.', 'Strategy', 10 ],
+			[ 'Wireframes for every template', 'Every page type, agreed before any design.', 'UX and wireframes', 24 ],
+			[ 'Design system and key pages', 'The look, built as reusable parts rather than pictures.', 'UI design', 30 ],
+			[ 'Build the site as a plugin', 'Templates, components and the editing experience.', 'Development', 80 ],
+			[ 'Forms, analytics and mail', 'The third-party pieces, wired up and tested.', 'Integrations', 14 ],
+			[ 'Analytics and consent', 'Analytics, consent banner and goal tracking.', 'Integrations', 8 ],
 			[ 'Search engine basics', 'Titles, descriptions, sitemap and structured data.', 'Development', 6 ],
+			[ 'Move existing content', 'Bringing across what is worth keeping, with redirects for every old address.', 'Migration', 12 ],
+			[ 'Cross-browser and device testing', 'Every template, on every size that matters.', 'QA and testing', 18 ],
+			[ 'Accessibility pass', 'Keyboard, contrast and screen reader checks across every template.', 'QA and testing', 12 ],
+			[ 'Performance tuning', 'Image handling, caching and a Core Web Vitals pass.', 'QA and testing', 10 ],
+			[ 'Weekly delivery management', 'Running the project, start to finish.', 'Project management', 16 ],
+			[ 'Go live', 'DNS, certificates, redirects and the switch itself.', 'Launch and deployment', 8 ],
 			[ 'Training session', 'Two hours with the team, recorded, plus a short written guide.', 'Training and handover', 4 ],
 		];
 
-		foreach ( $line_items as $entry ) {
-			$id = self::library_entry( $entry[0], Blueworx_Deck_Builder_Library::LINE_ITEM );
+		self::seed_line_items( $project, Blueworx_Deck_Builder_Library::LIST_ESTIMATE );
+
+		$after_launch = [
+			[ 'First month monitoring', 'Watching the site closely while real traffic arrives.', 'Launch monitoring', 10 ],
+			[ 'Monthly content changes', 'The ordinary run of copy and image updates.', 'Content updates', 12 ],
+			[ 'Speed and Core Web Vitals', 'Keeping the site quick as it grows.', 'Performance optimisation', 10 ],
+			[ 'Search and structured data', 'Making sure the work is findable.', 'Search optimisation', 8 ],
+			[ 'Small improvements', 'The things that only become obvious once it is live.', 'Feature improvements', 14 ],
+			[ 'Updates and backups', 'Keeping everything current and recoverable.', 'Support and maintenance', 10 ],
+		];
+
+		self::seed_line_items( $after_launch, Blueworx_Deck_Builder_Library::LIST_POSTLAUNCH );
+	}
+
+	/**
+	 * One list of line items, written into the library.
+	 *
+	 * @param array<int,array<int,mixed>> $rows Title, description, phase, hours.
+	 * @param string                      $which Which estimate these belong to.
+	 * @return void
+	 */
+	private static function seed_line_items( array $rows, $which ) {
+		foreach ( $rows as $index => $entry ) {
+			$id = self::library_entry( $entry[0], Blueworx_Deck_Builder_Library::LINE_ITEM, ( $index + 1 ) * 10 );
 			if ( ! $id ) {
 				continue;
 			}
+			update_post_meta( $id, 'bw_library_item_list', $which );
 			update_post_meta( $id, 'bw_library_item_desc', $entry[1] );
 			update_post_meta( $id, 'bw_library_item_phase', $entry[2] );
 			update_post_meta( $id, 'bw_library_item_hours', $entry[3] );
@@ -313,13 +248,14 @@ final class Blueworx_Deck_Builder_Starter {
 	}
 
 	/**
-	 * One library entry, made and typed.
+	 * One library entry, made, typed and placed.
 	 *
 	 * @param string $title Entry name.
-	 * @param string $type  Section or line item.
+	 * @param string $type  Entry type.
+	 * @param int    $order Where it sits in its own list.
 	 * @return int The new entry id, or 0 when the insert failed.
 	 */
-	private static function library_entry( $title, $type ) {
+	private static function library_entry( $title, $type, $order ) {
 		$id = wp_insert_post(
 			[
 				'post_type'   => Blueworx_Deck_Builder_Types::LIBRARY,
@@ -331,6 +267,7 @@ final class Blueworx_Deck_Builder_Starter {
 			return 0;
 		}
 		update_post_meta( (int) $id, 'bw_library_item_entry_type', $type );
+		update_post_meta( (int) $id, 'bw_library_item_order', $order );
 		return (int) $id;
 	}
 }

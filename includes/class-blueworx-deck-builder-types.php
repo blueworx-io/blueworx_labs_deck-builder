@@ -113,6 +113,17 @@ final class Blueworx_Deck_Builder_Types {
 	}
 
 	/**
+	 * Both phase lists at once, for the one place that cannot know which
+	 * estimate a row is destined for: a content library line item, which
+	 * carries its phase before it has landed anywhere.
+	 *
+	 * @return array<int,array<string,string>>
+	 */
+	public static function every_phase() {
+		return array_merge( self::project_phases(), self::postlaunch_phases() );
+	}
+
+	/**
 	 * The section types a deck can be built from.
 	 *
 	 * @return array<int,array<string,string>>
