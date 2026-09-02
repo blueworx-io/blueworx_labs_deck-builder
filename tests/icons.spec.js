@@ -51,6 +51,10 @@ test('every screen draws every one of its icons', async ({ page }) => {
     await page.waitForTimeout(300);
   }
 
+  // This walks the screens as they are, so an icon that only appears on an
+  // empty state is not reached once the site has records. Those names are
+  // written literally in the source, and the foundation's adherence check
+  // covers them; between the two, both kinds are seen.
   expect([...missing].sort()).toEqual([]);
 });
 

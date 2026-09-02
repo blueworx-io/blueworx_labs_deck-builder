@@ -10,11 +10,13 @@ test.use({ storageState: AUTH_STATE });
 // Publishing is a row action on the dashboard, and it is also what freezes the
 // package price onto the deck — so every test that needs a live link goes
 // through it rather than writing post_status directly.
-async function publish(page, id) {
+async function publish(page, client) {
   await page.goto('/wp-admin/admin.php?page=blueworx-labs-deck-builder');
-  const row = page.locator('.bw-table tbody tr').filter({ hasText: String(id) });
-  const target = (await row.count()) ? row : page.locator('.bw-table tbody tr').first();
-  await target.getByRole('button', { name: 'Publish' }).click();
+  // Decks outlive a run locally, so the same client can appear more than
+  // once. The list is newest-changed first and this deck was just made, so
+  // the first match is always this test's own.
+  const row = page.locator('.bw-table tbody tr').filter({ hasText: client }).first();
+  await row.getByRole('button', { name: 'Publish' }).click();
   await expect(page.locator('.bw-notice--success')).toBeVisible();
 }
 
@@ -34,7 +36,7 @@ test('a draft deck is not on the web, and a published one is', async ({ page, br
   const draft = await guestPage.goto(link);
   expect(draft.status()).toBe(404);
 
-  await publish(page, id);
+  await publish(page, 'Fenwick Homes');
 
   const live = await guestPage.goto(link);
   expect(live.status()).toBe(200);
@@ -45,7 +47,7 @@ test('a draft deck is not on the web, and a published one is', async ({ page, br
 
 test('the client deck is its own document, with no theme and no other plugin in it', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Trent Valley Wines', title: 'Cellar door' });
-  await publish(page, id);
+  await publish(page, 'Trent Valley Wines');
   const link = await linkFor(page, id);
 
   const guest = await browser.newContext({ storageState: undefined });
@@ -79,7 +81,7 @@ test('the client never receives an internal note or a hidden line item', async (
   await row.locator('input[type=checkbox]').nth(1).uncheck();
   await save(page);
 
-  await publish(page, id);
+  await publish(page, 'Ellery Dental');
   const link = await linkFor(page, id);
 
   const guest = await browser.newContext({ storageState: undefined });
@@ -98,7 +100,7 @@ test('the client never receives an internal note or a hidden line item', async (
 
 test('turning the link off takes the deck off the web', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Barrow Cycles', title: 'Shop site' });
-  await publish(page, id);
+  await publish(page, 'Barrow Cycles');
   const link = await linkFor(page, id);
 
   const guest = await browser.newContext({ storageState: undefined });
@@ -116,7 +118,7 @@ test('turning the link off takes the deck off the web', async ({ page, browser }
 
 test('a password-protected deck asks before it shows anything', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Halvard Marine', title: 'Fleet site' });
-  await publish(page, id);
+  await publish(page, 'Halvard Marine');
 
   await openEditor(page, id, 'Preview and share');
   await page.locator('#password_on').check();
@@ -142,7 +144,7 @@ test('a password-protected deck asks before it shows anything', async ({ page, b
 
 test('the deck reads as a presentation on a desktop and as a document on a phone', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Kestrel Aviation', title: 'Charter site' });
-  await publish(page, id);
+  await publish(page, 'Kestrel Aviation');
   const link = await linkFor(page, id);
 
   const guest = await browser.newContext({ storageState: undefined, viewport: { width: 1440, height: 900 } });
