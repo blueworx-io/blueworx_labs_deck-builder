@@ -26,6 +26,7 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 		$query  = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
 		$notice = isset( $_GET['done'] ) ? sanitize_key( wp_unslash( $_GET['done'] ) ) : '';
+		$asking = isset( $_GET['confirm_delete'] ) ? (int) $_GET['confirm_delete'] : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$shown = array_values(
@@ -174,7 +175,59 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 			</section>
 		<?php
 
+		self::delete_dialog( $asking );
+
 		Blueworx_Deck_Builder_Admin::close();
+	}
+
+	/**
+	 * Ask before deleting a deck.
+	 *
+	 * Rendered by the server rather than opened by script, so the question is
+	 * asked even where the design system's JavaScript never ran, and so that
+	 * backing out is a plain link to the list. Only an archived deck can be
+	 * asked about: archiving is the step that says nobody is using it.
+	 *
+	 * @param int $id Deck id from the address bar, or 0.
+	 * @return void
+	 */
+	private static function delete_dialog( $id ) {
+		if ( $id <= 0 ) {
+			return;
+		}
+
+		$deck = Blueworx_Deck_Builder_Deck::find( $id );
+		if ( null === $deck || 'archived' !== $deck->status() ) {
+			return;
+		}
+		?>
+		<div class="bw-scrim">
+			<div class="bw-modal" role="dialog" aria-modal="true" aria-labelledby="bw-delete-deck-title">
+				<div class="bw-modal__head">
+					<div>
+						<h2 class="bw-modal__title" id="bw-delete-deck-title"><?php esc_html_e( 'Delete this deck?', 'blueworx-labs-deck-builder' ); ?></h2>
+						<p class="bw-modal__sub">
+							<?php
+							printf(
+								/* translators: 1: client name, 2: deck title. */
+								esc_html__( '%1$s — %2$s', 'blueworx-labs-deck-builder' ),
+								esc_html( $deck->client_name() ),
+								esc_html( $deck->title() )
+							);
+							?>
+						</p>
+					</div>
+				</div>
+				<div class="bw-modal__body">
+					<p><?php esc_html_e( 'The deck, its content and its client link are removed for good. There is no undo, and restoring it from the archive will no longer be possible.', 'blueworx-labs-deck-builder' ); ?></p>
+				</div>
+				<div class="bw-modal__foot">
+					<a class="bw-btn bw-btn--secondary" href="<?php echo esc_url( Blueworx_Deck_Builder_Admin::url() ); ?>"><?php esc_html_e( 'Cancel', 'blueworx-labs-deck-builder' ); ?></a>
+					<?php Blueworx_Deck_Builder_Admin::action_button( __( 'Delete deck', 'blueworx-labs-deck-builder' ), 'delete_deck', $deck->id(), 'bw-btn bw-btn--danger' ); ?>
+				</div>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**
@@ -212,6 +265,13 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 					<?php Blueworx_Deck_Builder_Admin::action_button( __( 'Duplicate', 'blueworx-labs-deck-builder' ), 'duplicate', $deck->id(), 'bw-btn bw-btn--link bw-btn--sm' ); ?>
 					<?php if ( 'archived' === $status ) : ?>
 						<?php Blueworx_Deck_Builder_Admin::action_button( __( 'Restore', 'blueworx-labs-deck-builder' ), 'restore', $deck->id(), 'bw-btn bw-btn--link bw-btn--sm' ); ?>
+						<?php
+						// Deleting is offered on an archived deck only, and as a
+						// link rather than a button: it opens the confirmation
+						// and changes nothing, so the nonce belongs on the step
+						// that actually deletes.
+						?>
+						<a class="bw-rowactions__link bw-rowactions__link--danger" href="<?php echo esc_url( Blueworx_Deck_Builder_Admin::url( Blueworx_Deck_Builder_Admin::PAGE_SLUG, [ 'confirm_delete' => $deck->id() ] ) ); ?>"><?php esc_html_e( 'Delete', 'blueworx-labs-deck-builder' ); ?></a>
 					<?php else : ?>
 						<?php Blueworx_Deck_Builder_Admin::action_button( __( 'Archive', 'blueworx-labs-deck-builder' ), 'archive', $deck->id(), 'bw-btn bw-btn--link bw-btn--sm' ); ?>
 					<?php endif; ?>
@@ -391,6 +451,18 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 				}
 				delete_post_meta( $id, 'bw_deck_archived' );
 				return add_query_arg( 'done', 'restored', $decks );
+
+			// Archived first, always. Deleting is the one action here that
+			// cannot be taken back, so it is not reachable while a deck is
+			// still a draft somebody is writing or a published deck a client
+			// holds a link to — even if the id were posted by hand.
+			case 'delete_deck':
+				$deck = Blueworx_Deck_Builder_Deck::find( $id );
+				if ( null === $deck || 'archived' !== $deck->status() ) {
+					return add_query_arg( 'done', 'missing', $decks );
+				}
+				wp_delete_post( $id, true );
+				return add_query_arg( 'done', 'deleted', $decks );
 
 			case 'duplicate':
 				$copy = self::duplicate( $id );

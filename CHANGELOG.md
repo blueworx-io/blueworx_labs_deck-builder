@@ -6,6 +6,14 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-09-03
+
+### Added
+
+- An archived deck can now be deleted. The action shows on archived decks only,
+  asks before it acts, and removes the deck, its content and its client link for
+  good. A draft or a published deck has to be archived first.
+
 ## [0.7.0] - 2026-09-03
 
 ### Added
