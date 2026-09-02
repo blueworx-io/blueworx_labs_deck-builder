@@ -1,6 +1,6 @@
 <?php
 /**
- * The content library, and the two ways a deck exchanges rows with it.
+ * The content library: the one place a deck's content comes from.
  *
  * @package Blueworx\DeckBuilder
  */
@@ -8,13 +8,14 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * A library entry is a row somebody wants again: a section, or a line item.
+ * Every section and every line item the business uses lives here, once. A new
+ * deck is a copy of the whole library, and from that moment the copy is the
+ * deck's own — editing a library entry changes what the next deck starts with
+ * and leaves every deck already made alone.
  *
- * Both directions are worked as part of saving the deck rather than as their
- * own button, because the page editor's control list has no button in it and
- * a plugin does not add one on its own. So a tick is the instruction and the
- * save carries it out, after which the tick clears itself — the same shape as
- * every other change on the screen, and it cannot half-happen.
+ * There is no second list anywhere. A deck cannot carry a section that is not
+ * in the library, which is the deliberate trade: anything bespoke goes into
+ * the library first.
  */
 final class Blueworx_Deck_Builder_Library {
 
@@ -25,57 +26,26 @@ final class Blueworx_Deck_Builder_Library {
 	const LINE_ITEM = 'line_item';
 
 	/**
-	 * The field on the deck that says which entries to bring in, one per list
-	 * it can bring them into.
-	 *
-	 * @var array<string,string>
+	 * Which of a deck's two estimates a line item belongs to. They keep
+	 * separate totals and group by different phases, so a line item that did
+	 * not say would have to land on both.
 	 */
-	const PICKERS = [
-		'sections'   => 'library_sections',
-		'estimate'   => 'library_estimate',
-		'postlaunch' => 'library_postlaunch',
-	];
+	const LIST_ESTIMATE   = 'estimate';
+	const LIST_POSTLAUNCH = 'postlaunch';
 
 	/**
-	 * The cell on an estimate row that sends it the other way.
-	 */
-	const SAVE_CELL = 'to_library';
-
-	/**
-	 * Boot.
+	 * Every entry of one sort, in the order decks present them.
 	 *
-	 * @return void
-	 */
-	public static function register() {
-		// After the editor's own permission check has passed and its callback
-		// has run, so this only ever acts on a save that was allowed and that
-		// actually succeeded. There is no hook inside the shared library, and
-		// adding one there for a single plugin's convenience would be the
-		// wrong place for it.
-		add_filter( 'rest_request_after_callbacks', [ __CLASS__, 'after_save' ], 10, 3 );
-	}
-
-	/**
-	 * Entries of one sort, as checkbox options.
+	 * Order is a stored number rather than the title, because these are slides
+	 * in a presentation: alphabetical would open every deck on the call to
+	 * action. Entries sharing a number fall back to their title so the list is
+	 * at least stable.
 	 *
-	 * @param string $type Section or line item.
-	 * @return array<int,array<string,string>>
-	 */
-	public static function options( $type ) {
-		$out = [];
-		foreach ( self::entries( $type ) as $post ) {
-			$out[] = [ 'value' => (string) $post->ID, 'label' => $post->post_title ];
-		}
-		return $out;
-	}
-
-	/**
-	 * Every entry of one sort.
-	 *
-	 * @param string $type Section or line item.
+	 * @param string      $type Entry type.
+	 * @param string|null $which For a line item, which estimate; null for all.
 	 * @return array<int,WP_Post>
 	 */
-	private static function entries( $type ) {
+	public static function entries( $type, $which = null ) {
 		$posts = get_posts(
 			[
 				'post_type'   => Blueworx_Deck_Builder_Types::LIBRARY,
@@ -86,14 +56,28 @@ final class Blueworx_Deck_Builder_Library {
 				'order'       => 'ASC',
 			]
 		);
-		return array_values(
+
+		$of_type = array_values(
 			array_filter(
 				$posts,
-				static function ( $post ) use ( $type ) {
-					return self::type_of( $post->ID ) === $type;
+				static function ( $post ) use ( $type, $which ) {
+					if ( self::type_of( $post->ID ) !== $type ) {
+						return false;
+					}
+					return null === $which || self::list_of( $post->ID ) === $which;
 				}
 			)
 		);
+
+		usort(
+			$of_type,
+			static function ( $a, $b ) {
+				$order = self::order_of( $a->ID ) <=> self::order_of( $b->ID );
+				return 0 !== $order ? $order : strcasecmp( $a->post_title, $b->post_title );
+			}
+		);
+
+		return $of_type;
 	}
 
 	/**
@@ -112,6 +96,45 @@ final class Blueworx_Deck_Builder_Library {
 	}
 
 	/**
+	 * Which estimate a line item belongs to.
+	 *
+	 * Anything not explicitly post-launch is project work — an entry written
+	 * before the library made the distinction was a project line item, and a
+	 * row that quietly moved lists on upgrade would change a deck's totals.
+	 *
+	 * @param int $id Entry id.
+	 * @return string
+	 */
+	public static function list_of( $id ) {
+		return self::LIST_POSTLAUNCH === self::field( $id, 'list' ) ? self::LIST_POSTLAUNCH : self::LIST_ESTIMATE;
+	}
+
+	/**
+	 * Where an entry sits in its own list.
+	 *
+	 * @param int $id Entry id.
+	 * @return int
+	 */
+	public static function order_of( $id ) {
+		return (int) self::field( $id, 'order' );
+	}
+
+	/**
+	 * How one entry is described in a list of them.
+	 *
+	 * @param int $id Entry id.
+	 * @return string
+	 */
+	public static function describe( $id ) {
+		if ( self::LINE_ITEM !== self::type_of( $id ) ) {
+			return __( 'Section', 'blueworx-labs-deck-builder' );
+		}
+		return self::LIST_POSTLAUNCH === self::list_of( $id )
+			? __( 'Post-launch line item', 'blueworx-labs-deck-builder' )
+			: __( 'Project line item', 'blueworx-labs-deck-builder' );
+	}
+
+	/**
 	 * One entry's own field.
 	 *
 	 * @param int    $id    Entry id.
@@ -120,6 +143,40 @@ final class Blueworx_Deck_Builder_Library {
 	 */
 	private static function field( $id, $field ) {
 		return get_post_meta( (int) $id, Blueworx_Deck_Builder_Types::LIBRARY . '_' . $field, true );
+	}
+
+	/* --- What a new deck starts as ----------------------------------------- */
+
+	/**
+	 * The whole library, as the three lists a new deck holds.
+	 *
+	 * Everything arrives ticked. A row that landed excluded would read as the
+	 * copy having half-failed, and leaving work out of the package calculation
+	 * by default would quietly under-state what a retainer has to cover.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>>
+	 */
+	public static function starting_lists() {
+		$sections = [];
+		foreach ( self::entries( self::SECTION ) as $post ) {
+			$sections[] = self::section_row( $post->ID );
+		}
+
+		$estimate = [];
+		foreach ( self::entries( self::LINE_ITEM, self::LIST_ESTIMATE ) as $post ) {
+			$estimate[] = self::line_item_row( $post->ID );
+		}
+
+		$postlaunch = [];
+		foreach ( self::entries( self::LINE_ITEM, self::LIST_POSTLAUNCH ) as $post ) {
+			$postlaunch[] = self::line_item_row( $post->ID );
+		}
+
+		return [
+			'sections'   => $sections,
+			'estimate'   => $estimate,
+			'postlaunch' => $postlaunch,
+		];
 	}
 
 	/**
@@ -136,7 +193,7 @@ final class Blueworx_Deck_Builder_Library {
 			'eyebrow' => (string) self::field( $id, 'eyebrow' ),
 			'body'    => (string) self::field( $id, 'body' ),
 			'points'  => (string) self::field( $id, 'points' ),
-			'hours'   => '',
+			'hours'   => 0,
 			'strap'   => (string) self::field( $id, 'strap' ),
 			'note'    => (string) self::field( $id, 'note' ),
 			'visible' => true,
@@ -146,9 +203,8 @@ final class Blueworx_Deck_Builder_Library {
 	/**
 	 * An entry as a row for one of the deck's estimate lists.
 	 *
-	 * The three switches all arrive on, because somebody adding a line item
-	 * meant to add work — a row that lands excluded from every total reads as
-	 * the insert having failed.
+	 * The internal note is deliberately not carried: it is written about one
+	 * client, on one deck, and has no business starting the next one.
 	 *
 	 * @param int $id Entry id.
 	 * @return array<string,mixed>
@@ -156,171 +212,14 @@ final class Blueworx_Deck_Builder_Library {
 	public static function line_item_row( $id ) {
 		$post = get_post( (int) $id );
 		return [
-			'title'         => null === $post ? '' : $post->post_title,
-			'desc'          => (string) self::field( $id, 'desc' ),
-			'phase'         => (string) self::field( $id, 'phase' ),
-			'hours'         => (float) self::field( $id, 'hours' ),
-			'note'          => '',
-			'in_total'      => true,
-			'show_client'   => true,
-			'in_package'    => true,
-			self::SAVE_CELL => false,
+			'title'       => null === $post ? '' : $post->post_title,
+			'desc'        => (string) self::field( $id, 'desc' ),
+			'phase'       => (string) self::field( $id, 'phase' ),
+			'hours'       => (float) self::field( $id, 'hours' ),
+			'note'        => '',
+			'in_total'    => true,
+			'show_client' => true,
+			'in_package'  => true,
 		];
-	}
-
-	/**
-	 * Keep an estimate row for next time.
-	 *
-	 * The internal note is deliberately left behind: it was written about one
-	 * client, and carrying it into the library would put it in front of the
-	 * next one.
-	 *
-	 * @param array<string,mixed> $row One estimate row.
-	 * @return int The new entry id, or 0 when there was nothing worth keeping.
-	 */
-	public static function keep_line_item( array $row ) {
-		$title = sanitize_text_field( (string) ( $row['title'] ?? '' ) );
-		if ( '' === trim( $title ) ) {
-			return 0;
-		}
-
-		$id = wp_insert_post(
-			[
-				'post_type'   => Blueworx_Deck_Builder_Types::LIBRARY,
-				'post_status' => 'publish',
-				'post_title'  => $title,
-			],
-			true
-		);
-		if ( is_wp_error( $id ) || ! $id ) {
-			return 0;
-		}
-
-		$meta = [
-			'entry_type' => self::LINE_ITEM,
-			'desc'       => sanitize_text_field( (string) ( $row['desc'] ?? '' ) ),
-			'phase'      => sanitize_text_field( (string) ( $row['phase'] ?? '' ) ),
-			'hours'      => (float) ( $row['hours'] ?? 0 ),
-		];
-		foreach ( $meta as $field => $value ) {
-			update_post_meta( (int) $id, Blueworx_Deck_Builder_Types::LIBRARY . '_' . $field, $value );
-		}
-
-		return (int) $id;
-	}
-
-	/**
-	 * Act on a deck save that has already happened.
-	 *
-	 * @param WP_REST_Response|WP_HTTP_Response|WP_Error|mixed $response Whatever the route answered.
-	 * @param array<string,mixed>                              $handler  The route's own handler.
-	 * @param WP_REST_Request                                  $request  The request.
-	 * @return mixed The response, with its values brought up to date.
-	 */
-	public static function after_save( $response, $handler, $request ) {
-		$route = '/' . \Blueworx\PageEditor\v1\Rest::NS . '/' . Blueworx_Deck_Builder_Editor::DECK_SCREEN;
-		if ( 'POST' !== $request->get_method() || $route !== $request->get_route() ) {
-			return $response;
-		}
-		if ( ! $response instanceof WP_REST_Response ) {
-			return $response;
-		}
-
-		$body = $response->get_data();
-		if ( ! is_array( $body ) || empty( $body['ok'] ) || ! isset( $body['values'] ) ) {
-			return $response;
-		}
-
-		$deck = Blueworx_Deck_Builder_Deck::find( (int) $request->get_param( 'id' ) );
-		if ( null === $deck ) {
-			return $response;
-		}
-
-		$values  = (array) $body['values'];
-		$changed = self::keep_ticked_rows( $deck, $values );
-		$changed = self::insert_picked_entries( $deck, $values ) || $changed;
-
-		if ( $changed ) {
-			$body['values'] = $values;
-			$response->set_data( $body );
-		}
-
-		return $response;
-	}
-
-	/**
-	 * Copy every ticked estimate row into the library, then clear the ticks.
-	 *
-	 * @param Blueworx_Deck_Builder_Deck $deck   The deck.
-	 * @param array<string,mixed>        $values Its values, changed in place.
-	 * @return bool Whether anything moved.
-	 */
-	private static function keep_ticked_rows( Blueworx_Deck_Builder_Deck $deck, array &$values ) {
-		$changed = false;
-
-		foreach ( [ 'estimate', 'postlaunch' ] as $list ) {
-			$rows  = isset( $values[ $list ] ) && is_array( $values[ $list ] ) ? $values[ $list ] : [];
-			$moved = false;
-			foreach ( $rows as $i => $row ) {
-				if ( ! is_array( $row ) || empty( $row[ self::SAVE_CELL ] ) ) {
-					continue;
-				}
-				self::keep_line_item( $row );
-				$rows[ $i ][ self::SAVE_CELL ] = false;
-				$moved                         = true;
-			}
-			if ( $moved ) {
-				$values[ $list ] = array_values( $rows );
-				self::write( $deck, $list, $values[ $list ] );
-				$changed = true;
-			}
-		}
-
-		return $changed;
-	}
-
-	/**
-	 * Append every picked entry to the list it belongs in, then clear the pick.
-	 *
-	 * @param Blueworx_Deck_Builder_Deck $deck   The deck.
-	 * @param array<string,mixed>        $values Its values, changed in place.
-	 * @return bool Whether anything moved.
-	 */
-	private static function insert_picked_entries( Blueworx_Deck_Builder_Deck $deck, array &$values ) {
-		$changed = false;
-
-		foreach ( self::PICKERS as $list => $picker ) {
-			$picked = isset( $values[ $picker ] ) && is_array( $values[ $picker ] ) ? $values[ $picker ] : [];
-			if ( ! $picked ) {
-				continue;
-			}
-
-			$rows = isset( $values[ $list ] ) && is_array( $values[ $list ] ) ? array_values( $values[ $list ] ) : [];
-			foreach ( $picked as $entry_id ) {
-				$rows[] = 'sections' === $list
-					? self::section_row( (int) $entry_id )
-					: self::line_item_row( (int) $entry_id );
-			}
-
-			$values[ $list ]   = $rows;
-			$values[ $picker ] = [];
-			self::write( $deck, $list, $rows );
-			self::write( $deck, $picker, [] );
-			$changed = true;
-		}
-
-		return $changed;
-	}
-
-	/**
-	 * Put one field back, using the same meta key the editor library writes.
-	 *
-	 * @param Blueworx_Deck_Builder_Deck $deck  The deck.
-	 * @param string                     $field Field id.
-	 * @param mixed                      $value New value.
-	 * @return void
-	 */
-	private static function write( Blueworx_Deck_Builder_Deck $deck, $field, $value ) {
-		update_post_meta( $deck->id(), Blueworx_Deck_Builder_Types::DECK . '_' . $field, $value );
 	}
 }

@@ -13,7 +13,7 @@ const LOGIN_PATH = process.env.WP_LOGIN_PATH || '/wp-login.php';
 const AUTH_STATE = path.join(__dirname, '.auth-state.json');
 
 const DECKS = '/wp-admin/admin.php?page=blueworx-labs-deck-builder';
-const CREATE = '/wp-admin/admin.php?page=blueworx-labs-deck-builder-create';
+const LIBRARY = '/wp-admin/admin.php?page=blueworx-labs-deck-builder-library';
 const PACKAGES = '/wp-admin/admin.php?page=blueworx-labs-deck-builder-packages';
 const EDITOR = '/wp-admin/admin.php?page=blueworx-deck-editor&id=';
 
@@ -48,22 +48,30 @@ async function signIn(browser) {
   await context.close();
 }
 
-// Make a deck through the screen a person would use, and hand back the id the
-// editor opened on. Creating it through the UI rather than through the
-// database is deliberate: it is the only way the "create" path is ever
-// exercised, and it is where a new deck's client link gets minted.
-async function createDeck(page, { client, title, start = 'retainer' }) {
-  await page.goto(CREATE);
-  await page.fill('#bw-client', client);
-  await page.fill('#bw-title', title);
-  await page.check(`input[name="start"][value="${start}"]`);
+// Make a deck the way a person would, and hand back the id the editor opened
+// on. Creating it through the UI rather than through the database is
+// deliberate: it is the only way the "create" path is ever exercised, and it
+// is where a new deck's client link gets minted and its content copied out of
+// the library.
+//
+// There is no create form any more — the button makes the deck and drops you
+// in the editor — so the client and the title are typed on the Overview tab
+// and saved, which is exactly what a person now does.
+async function createDeck(page, { client, title }) {
+  await page.goto(DECKS);
   await Promise.all([
     page.waitForURL(/page=blueworx-deck-editor/),
-    page.click('button[type=submit].bw-btn--primary'),
+    page.locator('.bw-pagehead__actions a.bw-btn--primary').click(),
   ]);
 
   const id = new URL(page.url()).searchParams.get('id');
   expect(Number(id)).toBeGreaterThan(0);
+
+  await expect(page.locator('#post_title')).toBeVisible();
+  await page.fill('#post_title', title);
+  await page.fill('#client', client);
+  await save(page);
+
   return Number(id);
 }
 
@@ -87,4 +95,4 @@ async function save(page) {
   await expect(bar.locator('.bw-savebar__hint')).toHaveText(/everything is saved/i, { timeout: 30000 });
 }
 
-module.exports = { AUTH_STATE, DECKS, CREATE, PACKAGES, EDITOR, signIn, signInAs, createDeck, openEditor, save };
+module.exports = { AUTH_STATE, DECKS, LIBRARY, PACKAGES, EDITOR, signIn, signInAs, createDeck, openEditor, save };

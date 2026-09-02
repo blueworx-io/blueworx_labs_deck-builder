@@ -1,7 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { AUTH_STATE, signIn, createDeck, openEditor, save } = require('./helpers');
-
-const LIBRARY = '/wp-admin/admin.php?page=blueworx-labs-deck-builder-library';
+const { AUTH_STATE, LIBRARY, signIn, createDeck, openEditor, save } = require('./helpers');
 
 test.beforeAll(async ({ browser }) => {
   await signIn(browser);
@@ -9,70 +7,146 @@ test.beforeAll(async ({ browser }) => {
 
 test.use({ storageState: AUTH_STATE });
 
-test('a section picked from the library arrives as a new row, and the tick clears', async ({ page }) => {
+test('a new deck arrives as a copy of the whole library', async ({ page }) => {
   const id = await createDeck(page, { client: 'Ferry Lane Bakery', title: 'New site' });
+
+  // Fourteen sections in the library, fourteen rows on the deck. There is no
+  // second list any more, so this is the only place either number comes from.
+  await openEditor(page, id, 'Sections');
+  await expect(page.locator('.bw-repeater__row')).toHaveCount(14);
+  await expect(page.locator('.bw-repeater__row').first().locator('input[type=text]').first()).toHaveValue('Cover');
+
+  // Every line item, in the list it belongs to, and all of them counting.
+  await openEditor(page, id, 'Project estimate');
+  await expect(page.locator('.bw-repeater__row')).toHaveCount(16);
+  await expect(page.locator('.bw-summary__cell').first()).toContainText('272');
+
+  await openEditor(page, id, 'Post-launch');
+  await expect(page.locator('.bw-repeater__row')).toHaveCount(6);
+  await expect(page.locator('.bw-summary__cell').nth(1)).toContainText('64');
+});
+
+test('a deck cannot add, remove or reorder a section', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Alderton Vets', title: 'Practice site' });
   await openEditor(page, id, 'Sections');
 
-  const rows = page.locator('.bw-repeater__row');
-  const before = await rows.count();
+  await expect(page.getByRole('button', { name: 'Add a row' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Remove this row' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Move up' })).toHaveCount(0);
+  await expect(page.locator('.bw-repeater__grip')).toHaveCount(0);
 
-  await page.locator('.bw-check', { hasText: 'Standard introduction' }).locator('input').check();
+  // No library picker either: the deck already has everything the library
+  // holds, so there is nothing left to pick.
+  await expect(page.locator('.bw-card', { hasText: 'Add a section from the library' })).toHaveCount(0);
+});
+
+test('the wording of a section is this deck\'s own, and survives a save', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Rowan Interiors', title: 'Studio site' });
+  await openEditor(page, id, 'Sections');
+
+  const first = page.locator('.bw-repeater__row').first().locator('input[type=text]').first();
+  await first.fill('Cover — Rowan Interiors');
   await save(page);
-
-  // The row is in the list, and the entry it came from is untouched — the
-  // deck holds a copy, not a reference.
-  await expect(rows).toHaveCount(before + 1);
-  await expect(rows.last().locator('input[type=text]').first()).toHaveValue('Standard introduction');
-
-  // The tick is an instruction, not a setting: once carried out it goes back
-  // to nothing, so the next save does not add the section a second time.
-  await expect(page.locator('.bw-check', { hasText: 'Standard introduction' }).locator('input')).not.toBeChecked();
-
   await page.reload();
-  await expect(page.locator('.bw-tab:has-text("Sections")')).toBeVisible();
+  await page.click('.bw-tab:has-text("Sections")');
+  await expect(page.locator('.bw-repeater__row').first().locator('input[type=text]').first())
+    .toHaveValue('Cover — Rowan Interiors');
+
+  // And the library entry it was copied from is untouched.
+  await page.goto(LIBRARY);
+  await expect(page.locator('.bw-table tbody')).toContainText('Cover');
+  await expect(page.locator('.bw-table tbody')).not.toContainText('Rowan Interiors');
 });
 
-test('a line item picked from the library counts towards the totals straight away', async ({ page }) => {
-  const id = await createDeck(page, { client: 'Alderton Vets', title: 'Practice site' });
-  await openEditor(page, id, 'Project estimate');
-
-  // The retainer set is 232 hours before anything is added.
-  await expect(page.locator('.bw-summary__cell').first()).toContainText('232');
-
-  await page.locator('.bw-check', { hasText: 'Accessibility pass' }).locator('input').check();
-  await save(page);
-
-  // Accessibility pass is 12 hours, and a row arriving from the library counts
-  // in every total rather than landing switched off.
-  await expect(page.locator('.bw-summary__cell').first()).toContainText('244');
-  await expect(page.locator('.bw-summary__cell').nth(2)).toContainText('308');
-});
-
-test('the in-package figure is one number covering both lists', async ({ page }) => {
-  await createDeck(page, { client: 'Selby Print', title: 'Brochure site' });
-
-  // 232 before launch plus 64 after it. Shown as one figure, because that is
-  // what the recommendation is worked out from.
-  const cell = page.locator('.bw-summary__cell').nth(2);
-  await expect(cell).toContainText('In package calculation');
-  await expect(cell).toContainText('296');
-});
-
-test('a line item saved to the library turns up there, and the switch turns itself off', async ({ page }) => {
+test('the estimate cannot add or remove a line item either', async ({ page }) => {
   const id = await createDeck(page, { client: 'Whitlock Legal', title: 'Firm site' });
   await openEditor(page, id, 'Project estimate');
 
-  // The last switch on a row is "Save to library".
-  const row = page.locator('.bw-repeater__row').first();
-  const keep = row.locator('.bw-switch input').last();
-  await keep.check();
-  await save(page);
+  await expect(page.getByRole('button', { name: 'Add a row' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Remove this row' })).toHaveCount(0);
 
-  await expect(keep).not.toBeChecked();
+  // The switches that decide what a row counts towards are still there —
+  // taking work out of this quote is the whole job.
+  await expect(page.locator('.bw-repeater__row').first().locator('.bw-switch input')).toHaveCount(3);
+});
 
+test('the timeline runs in one order, and offers no way to change it', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Pennine Legal', title: 'Firm website' });
+  await openEditor(page, id, 'Timeline');
+
+  await expect(page.locator('.bw-gantt__row')).toHaveCount(8);
+  await expect(page.locator('.bw-gantt__legend .bw-btn')).toHaveCount(0);
+
+  const first = page.locator('.bw-gantt__row').first();
+  await expect(first.getByRole('button', { name: /^Move/ })).toHaveCount(0);
+  await expect(first.getByRole('button', { name: /^Duplicate/ })).toHaveCount(0);
+  await expect(first.getByRole('button', { name: /^Remove/ })).toHaveCount(0);
+
+  // Editing a phase and hiding one from the client both stay: the schedule is
+  // settled, the dates and the wording are not.
+  await expect(first.getByRole('button', { name: /^Edit/ })).toBeVisible();
+  await expect(first.getByRole('button', { name: /the client$/ })).toBeVisible();
+});
+
+test('the content library can be edited and deleted, but not added to', async ({ page }) => {
   await page.goto(LIBRARY);
-  await expect(page.locator('.bw-table tbody')).toContainText('Discovery workshop');
-  await expect(page.locator('.bw-table tbody tr', { hasText: 'Discovery workshop' }).first()).toContainText('Line item');
+
+  await expect(page.locator('.bw-pagehead__h1')).toHaveText('Content library');
+  await expect(page.getByRole('button', { name: 'Add entry' })).toHaveCount(0);
+
+  const row = page.locator('.bw-table tbody tr').first();
+  await expect(row.getByRole('link', { name: 'Edit' })).toBeVisible();
+  await expect(row.getByRole('button', { name: 'Delete' })).toBeVisible();
+
+  // Sections come first, then each estimate — the order a deck presents them,
+  // rather than an alphabetical pile.
+  await expect(row).toContainText('Cover');
+  await expect(row).toContainText('Section');
+});
+
+// A section's name is the value of a text input, not text on the page, so
+// reading it back means asking the inputs rather than the markup.
+async function sectionTitles(page) {
+  return page.locator('.bw-repeater__row').evaluateAll((rows) =>
+    rows.map((row) => row.querySelector('input[type=text]').value));
+}
+
+// Renames the first library entry and hands back both names plus a way to put
+// it back. The library is site-wide state every other test reads, so a test
+// that renamed an entry and walked away would quietly change what the next one
+// sees — including on a second run against the same site.
+async function renameFirstEntry(page, to) {
+  await page.goto(LIBRARY);
+  const row = page.locator('.bw-table tbody tr').first();
+  const from = (await row.locator('.bw-table__primary').innerText()).trim();
+  await row.getByRole('link', { name: 'Edit' }).click();
+  await expect(page.locator('#post_title')).toBeVisible();
+  await page.fill('#post_title', to);
+  await save(page);
+  return from;
+}
+
+test('editing a library entry changes the next deck and leaves the last one alone', async ({ page }) => {
+  const before = await createDeck(page, { client: 'Marlow Studio', title: 'Brand site' });
+
+  const renamed = `Opening slide ${Date.now()}`;
+  const original = await renameFirstEntry(page, renamed);
+
+  try {
+    const after = await createDeck(page, { client: 'Calder Foods', title: 'Trade site' });
+
+    await openEditor(page, after, 'Sections');
+    expect(await sectionTitles(page)).toContain(renamed);
+
+    // The deck made before the edit is untouched: it holds its own copy, not a
+    // reference to the entry.
+    await openEditor(page, before, 'Sections');
+    const earlier = await sectionTitles(page);
+    expect(earlier).toContain(original);
+    expect(earlier).not.toContain(renamed);
+  } finally {
+    await renameFirstEntry(page, original);
+  }
 });
 
 test('the share tab frames the deck itself, at three widths', async ({ page }) => {

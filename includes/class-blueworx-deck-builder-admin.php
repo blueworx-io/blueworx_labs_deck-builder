@@ -76,6 +76,7 @@ class Blueworx_Deck_Builder_Admin {
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_filter( 'admin_body_class', [ $this, 'body_class' ] );
 		add_action( 'admin_post_blueworx_deck_action', [ $this, 'handle_action' ] );
+		add_action( 'admin_post_blueworx_deck_create', [ $this, 'handle_create' ] );
 	}
 
 	/**
@@ -100,9 +101,25 @@ class Blueworx_Deck_Builder_Admin {
 			58
 		);
 
+		$this->hooks[] = add_submenu_page( self::PAGE_SLUG, __( 'Decks', 'blueworx-labs-deck-builder' ), __( 'Decks', 'blueworx-labs-deck-builder' ), self::CAPABILITY, self::PAGE_SLUG, [ $this, 'render_decks' ] );
+
+		// Creating a deck is no longer a screen: there is nothing left to ask
+		// before making one, because a deck starts as a copy of the whole
+		// content library and everything about the client is edited on the
+		// deck itself. So this menu item does the thing rather than opening a
+		// form that only stood between somebody and the editor. WordPress
+		// links a submenu slug containing ".php" straight through, which is
+		// how a menu item can be an action at all — and the nonce is what
+		// stops a link somebody clicked elsewhere from making decks.
+		add_submenu_page(
+			self::PAGE_SLUG,
+			__( 'Create new deck', 'blueworx-labs-deck-builder' ),
+			__( 'Create new deck', 'blueworx-labs-deck-builder' ),
+			self::CAPABILITY,
+			self::create_url()
+		);
+
 		$pages = [
-			[ self::PAGE_SLUG, __( 'Decks', 'blueworx-labs-deck-builder' ), [ $this, 'render_decks' ] ],
-			[ self::PAGE_SLUG . '-create', __( 'Create new deck', 'blueworx-labs-deck-builder' ), [ $this, 'render_create' ] ],
 			[ self::PAGE_SLUG . '-library', __( 'Content library', 'blueworx-labs-deck-builder' ), [ $this, 'render_library' ] ],
 			[ self::PAGE_SLUG . '-case-studies', __( 'Case studies', 'blueworx-labs-deck-builder' ), [ $this, 'render_case_studies' ] ],
 			[ self::PAGE_SLUG . '-packages', __( 'Support packages', 'blueworx-labs-deck-builder' ), [ $this, 'render_packages' ] ],
@@ -114,6 +131,18 @@ class Blueworx_Deck_Builder_Admin {
 		foreach ( $pages as $page ) {
 			$this->hooks[] = add_submenu_page( self::PAGE_SLUG, $page[1], $page[1], self::CAPABILITY, $page[0], $page[2] );
 		}
+	}
+
+	/**
+	 * The address that makes a new deck and opens it.
+	 *
+	 * @return string
+	 */
+	public static function create_url() {
+		return wp_nonce_url(
+			add_query_arg( 'action', 'blueworx_deck_create', admin_url( 'admin-post.php' ) ),
+			'blueworx_deck_create'
+		);
 	}
 
 	/**
@@ -239,16 +268,6 @@ class Blueworx_Deck_Builder_Admin {
 	}
 
 	/**
-	 * Create a new deck.
-	 *
-	 * @return void
-	 */
-	public function render_create() {
-		$this->guard();
-		Blueworx_Deck_Builder_Decks_Screen::render_create();
-	}
-
-	/**
 	 * Support packages.
 	 *
 	 * @return void
@@ -312,6 +331,32 @@ class Blueworx_Deck_Builder_Admin {
 		$redirect = Blueworx_Deck_Builder_Decks_Screen::do_action( $action, $id, $_POST );
 
 		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/**
+	 * Make a new deck and go straight to its editor.
+	 *
+	 * The one action reached by a link rather than a form, because it is a
+	 * menu item. It still checks the capability and a nonce, so a link
+	 * somebody was sent cannot make decks on their behalf, and it creates a
+	 * draft — nothing a client can see until somebody publishes it.
+	 *
+	 * @return void
+	 */
+	public function handle_create() {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to do that.', 'blueworx-labs-deck-builder' ) );
+		}
+		check_admin_referer( 'blueworx_deck_create' );
+
+		$id = Blueworx_Deck_Builder_Deck::create( [] );
+
+		wp_safe_redirect(
+			$id > 0
+				? self::editor_url( Blueworx_Deck_Builder_Editor::DECK_SCREEN, $id )
+				: add_query_arg( 'done', 'notmade', self::url() )
+		);
 		exit;
 	}
 

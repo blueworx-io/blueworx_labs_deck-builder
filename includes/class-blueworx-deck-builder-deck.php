@@ -107,10 +107,14 @@ final class Blueworx_Deck_Builder_Deck {
 	 *
 	 * A deck is created here rather than by the editor library, which edits
 	 * records and never makes them. Everything a deck cannot work without —
-	 * its client link, its currency, its starting point — is set now, so the
-	 * editor never opens onto a half-made record.
+	 * its client link, its currency, its content — is set now, so the editor
+	 * never opens onto a half-made record.
 	 *
-	 * @param array<string,mixed> $args Client, title, currency, start and the rest.
+	 * There is no starting point to choose any more: every deck starts as a
+	 * copy of the whole content library, and taking a section out is a tick on
+	 * the deck rather than a decision made before it exists.
+	 *
+	 * @param array<string,mixed> $args Client, title, currency and the rest. All optional.
 	 * @return int The new deck id, or 0 when the insert failed.
 	 */
 	public static function create( array $args ) {
@@ -127,20 +131,15 @@ final class Blueworx_Deck_Builder_Deck {
 			return 0;
 		}
 
-		$start = ( isset( $args['start'] ) && 'blank' === $args['start'] ) ? 'blank' : 'retainer';
-
 		update_post_meta( $id, 'bw_deck_client', sanitize_text_field( (string) ( $args['client'] ?? '' ) ) );
 		update_post_meta( $id, 'bw_deck_subtitle', sanitize_textarea_field( (string) ( $args['subtitle'] ?? '' ) ) );
 		update_post_meta( $id, 'bw_deck_prepared_for', sanitize_text_field( (string) ( $args['prepared_for'] ?? '' ) ) );
 		update_post_meta( $id, 'bw_deck_prepared_date', sanitize_text_field( (string) ( $args['prepared_date'] ?? gmdate( 'Y-m-d' ) ) ) );
 		update_post_meta( $id, 'bw_deck_currency', self::clean_currency( $args['currency'] ?? 'GBP' ) );
-		update_post_meta( $id, 'bw_deck_start', $start );
 		update_post_meta( $id, 'bw_deck_link_slug', self::mint_slug() );
 		update_post_meta( $id, 'bw_deck_link_enabled', true );
 
-		if ( 'retainer' === $start ) {
-			Blueworx_Deck_Builder_Starter::load_into( (int) $id );
-		}
+		Blueworx_Deck_Builder_Starter::load_into( (int) $id );
 
 		return (int) $id;
 	}

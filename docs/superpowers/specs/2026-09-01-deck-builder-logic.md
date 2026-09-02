@@ -1,5 +1,11 @@
 # Data model, state and logic
 
+> **Superseded in 0.5.0, in part.** The content library is now the only source of a
+> deck's content: a new deck is a copy of the whole library, there is no starting
+> point to choose and no create screen, and a deck's sections, estimates and
+> timeline are fixed lists — nothing is added, removed, duplicated or reordered on
+> a deck. Where this document describes those, read it as history.
+
 ## Entities
 
 ### Deck

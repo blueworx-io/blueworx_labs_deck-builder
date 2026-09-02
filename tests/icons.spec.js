@@ -32,7 +32,6 @@ test('every screen draws every one of its icons', async ({ page }) => {
 
   const screens = [
     DECKS,
-    `${DECKS}-create`,
     `${DECKS}-packages`,
     `${DECKS}-case-studies`,
     `${DECKS}-library`,

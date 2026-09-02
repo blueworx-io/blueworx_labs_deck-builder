@@ -6,6 +6,38 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-02
+
+### Changed
+
+- The content library is now the only place a deck's content comes from. Every
+  new deck arrives as a copy of the whole library — every section and every line
+  item, all switched on — and from then on the copy is that deck's own. Editing a
+  library entry changes what the next deck starts with and leaves existing decks
+  untouched. The separate hardcoded retainer set is gone, so there is no second
+  list to disagree with the first.
+- Creating a deck is one click. The starting-point screen has gone, along with the
+  choice between a retainer deck and a blank one: "Create new deck" makes the deck
+  and opens it, and the client, title and currency are filled in on the deck
+  itself.
+- A deck's sections, its two estimates and its timeline are fixed lists. Nothing
+  can be added, removed, duplicated or reordered, and the library pickers have
+  gone with them. Every section presents in the same order every time. What each
+  one says, and whether the client sees it, are still per deck.
+- The content library can be browsed, edited and deleted from, but not added to.
+  A new entry is a change to what the business offers, so it is made in code.
+
+### Fixed
+
+- Dropdowns drew two arrows — WordPress puts its own chevron on every select in
+  wp-admin, and it was landing beside the design system's. They also wore
+  WordPress's height, border and corners instead of ours.
+- Screens and panels ended flush against the bottom of the window, with no
+  breathing room under the last thing on them.
+- The actions column on every table had no heading, because it shared the class
+  that fades row actions in on hover. It now says "Actions", and a table too wide
+  for its card scrolls inside the card instead of spilling past it.
+
 ## [0.4.1] - 2026-09-02
 
 ### Fixed
