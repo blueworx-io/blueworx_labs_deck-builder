@@ -37,6 +37,27 @@ final class Blueworx_Deck_Builder_Editor {
 	const OPTION = 'blueworx_deck_builder_settings';
 
 	/**
+	 * What every record here leaves off the library's Publish and settings tab.
+	 *
+	 * None of these records is a page of the site. A deck, a package, a case
+	 * study and a library entry have no excerpt to summarise them, no comments
+	 * to allow, no categories to be found by and nothing to sit underneath. The
+	 * address matters — a deck's is the client link — but it is something to
+	 * copy, never something to retype: changing it breaks a link already sent,
+	 * and the deck's own link is minted when the deck is made.
+	 *
+	 * Status, publish date and author stay. Those are what publishing a record
+	 * actually means, and nothing here would be better for hiding them.
+	 */
+	const PUBLISHING = [
+		'slug'       => 'readonly',
+		'excerpt'    => false,
+		'comments'   => false,
+		'taxonomies' => false,
+		'parent'     => false,
+	];
+
+	/**
 	 * Boot.
 	 *
 	 * @return void
@@ -166,6 +187,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'Everything this client will see. Nothing changes on the client link until you save.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::DECK,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'summary'    => [
 				[ 'id' => 'project', 'label' => __( 'Project estimate', 'blueworx-labs-deck-builder' ), 'sum' => 'estimate.hours', 'where' => 'estimate.in_total', 'suffix' => 'hrs', 'foot' => __( 'Work required before launch', 'blueworx-labs-deck-builder' ) ],
 				[ 'id' => 'postlaunch', 'label' => __( 'Post-launch work', 'blueworx-labs-deck-builder' ), 'sum' => 'postlaunch.hours', 'where' => 'postlaunch.in_total', 'suffix' => 'hrs', 'foot' => __( 'Work planned after launch', 'blueworx-labs-deck-builder' ) ],
@@ -672,6 +694,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'Set this package up once. Every deck that recommends it uses what is here.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::PACKAGE,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'tabs'       => [
 				[
 					'id'     => 'package',
@@ -720,6 +743,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'Past work, ready to drop into any deck.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::CASE_STUDY,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'tabs'       => [
 				[
 					'id'     => 'study',
@@ -770,6 +794,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'A section or a line item every new deck starts with. Changing it here changes what the next deck begins with; decks already made keep their own copy.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::LIBRARY,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'tabs'       => [
 				[
 					'id'     => 'entry',

@@ -180,3 +180,70 @@ test('the record editors are reachable but are not in the menu', async ({ page }
   await expect(page.locator('#adminmenu a[href*="page=blueworx-deck-editor"]')).toHaveCount(0);
   await expect(page.locator('#adminmenu a[href$="page=blueworx-labs-deck-builder-settings"]')).toHaveCount(1);
 });
+
+// The fourth tile used to count decks above the largest package — a number that
+// was zero on a healthy site and told nobody anything. What a sales team wants
+// off this screen is what the open decks are worth if they all land.
+test('the dashboard totals what the recommended packages are worth', async ({ page }) => {
+  await page.goto(DECKS);
+
+  const tile = page.locator('.bw-stat').filter({ hasText: 'Potential earnings' });
+  await expect(tile.locator('.bw-stat__foot')).toHaveText('Total monthly potential');
+
+  const asNumber = async () => Number((await tile.locator('.bw-stat__value').innerText()).replace(/[^0-9]/g, ''));
+  const before = await asNumber();
+  await expect(tile.locator('.bw-stat__value')).toContainText('£');
+
+  // A new deck's 336 hours land on Core Plus, which is £1,600 a month. The
+  // figure is read either side of creating it rather than asserted outright:
+  // every other test in this file leaves decks behind, so the only stable
+  // claim is what one more deck adds.
+  await createDeck(page, { client: 'Wray & Co', title: 'Practice site' });
+
+  await page.goto(DECKS);
+  expect(await asNumber()).toBe(before + 1600);
+});
+
+// A deck is not a page of the site: it has no excerpt, no comments, no
+// categories and no parent, and its address is something to copy rather than
+// something to retype.
+test('a deck cannot have its address retyped, and carries no page settings', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Ledbury Mills', title: 'Trade site' });
+  await openEditor(page, id, 'Publish');
+
+  await expect(page.locator('#post_status')).toBeVisible();
+  await expect(page.locator('#post_excerpt')).toHaveCount(0);
+  await expect(page.locator('#comment_status')).toHaveCount(0);
+  await expect(page.locator('.bw-card__title:text-is("Categories and tags")')).toHaveCount(0);
+  await expect(page.locator('.bw-card__title:text-is("Parent and template")')).toHaveCount(0);
+
+  const slug = page.locator('#post_name');
+  await expect(slug).toHaveJSProperty('readOnly', true);
+  await expect(slug).toHaveValue(/^https?:\/\/.+/);
+  await expect(page.locator('.bw-copyfield').getByRole('button', { name: 'Copy' })).toBeVisible();
+});
+
+// Every cell on its own line, at the width of the row. They used to share a
+// wrapping flex line, which put eight controls across the screen at whatever
+// width was left over.
+test('a section row stacks its fields one per line, each the full width', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Calder Foods', title: 'Brand site' });
+  await openEditor(page, id, 'Sections');
+
+  const row = page.locator('.bw-repeater__row').first();
+  const name = await row.locator('.bw-field').nth(0).boundingBox();
+  const type = await row.locator('.bw-field').nth(1).boundingBox();
+
+  expect(name.x).toBeCloseTo(type.x, 0);
+  expect(type.y).toBeGreaterThan(name.y + name.height - 1);
+
+  const fields = await row.locator('.bw-repeater__fields').boundingBox();
+  expect(name.width).toBeCloseTo(fields.width, 0);
+
+  // The panel's heading and description sit in their own card, and each row is
+  // its own card rather than a list nested inside one more.
+  const intro = page.locator('.bw-card:has(.bw-card__title:text-is("Sections"))');
+  await expect(intro).toHaveClass(/bw-card--intro/);
+  await expect(intro.locator('.bw-repeater')).toHaveCount(0);
+  await expect(page.locator('.bw-panel__loose .bw-repeater')).toHaveCount(1);
+});

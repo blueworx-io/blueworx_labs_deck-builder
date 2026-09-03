@@ -6,6 +6,25 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-03
+
+### Changed
+
+- The fourth tile on the Decks screen is now Potential earnings: what every open
+  deck's recommended package is worth a month if they all land. It is always in
+  pounds, whatever currency a deck displays for its client, and nothing is
+  converted — the figure is the pound price somebody actually set on the package.
+  Archived decks are left out, and a deck with no recommendation adds nothing.
+- Editing a deck, a package, a case study or a library entry no longer offers an
+  excerpt, comments, categories and tags, or a parent and template. None of these
+  records is a page of the site and none of that applied to them.
+- A record's address is now shown in full with a Copy button instead of being
+  typed into. Changing it broke links already sent, and a deck's link is made when
+  the deck is.
+- Rows in Sections, Project estimate and Post-launch now run one field per line at
+  full width, each row in its own card, instead of eight controls squeezed across
+  one wrapping line.
+
 ## [0.5.0] - 2026-09-02
 
 ### Changed
