@@ -23,7 +23,11 @@ test('a new deck arrives with an estimate, a timeline and its own client link', 
   await openEditor(page, id, 'Preview and share');
   const link = page.locator('.bw-copyfield input');
   await expect(link).toHaveValue(/\/deck\/[a-z0-9]{12}\/$/);
-  await expect(link).not.toHaveValue(new RegExp(String(id)));
+
+  // The slug is not the record id. Checking the whole link for those digits
+  // instead used to fail whenever a random slug happened to contain them.
+  const slug = (await link.inputValue()).match(/\/deck\/([a-z0-9]{12})\//)[1];
+  expect(slug).not.toBe(String(id));
 });
 
 test('there is no starting point left to choose', async ({ page }) => {
