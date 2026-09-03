@@ -178,3 +178,44 @@ test('the share tab frames the deck itself, at three widths', async ({ page }) =
   await page.click('.bw-tab:has-text("Preview and share")');
   await expect(page.locator('.bw-preview--empty')).toBeVisible();
 });
+
+// Every row's name, paired with the type column beside it.
+async function libraryRows(page) {
+  return page.locator('.bw-table tbody tr').evaluateAll((rows) =>
+    rows.map((row) => ({
+      name: row.querySelector('.bw-table__primary').innerText.trim(),
+      type: row.querySelectorAll('td')[1].innerText.trim(),
+    })));
+}
+
+test('an entry nobody numbered sits at the back of the library, not in front of the cover', async ({ page }) => {
+  await page.goto(LIBRARY);
+  const sections = (await libraryRows(page)).filter((row) => 'Section' === row.type);
+  expect(sections[0].name).toBe('Cover');
+
+  // Take the number off a section in the middle of the list. An entry written
+  // before the library kept an order has none either, and on a real site four
+  // of them opened every deck on the call to action.
+  const row = page.locator('.bw-table tbody tr').filter({ hasText: 'What we do' }).first();
+  await row.getByRole('link', { name: 'Edit' }).click();
+  await expect(page.locator('#order')).toBeVisible();
+  const original = await page.locator('#order').inputValue();
+  await page.fill('#order', '');
+  await save(page);
+
+  try {
+    await page.goto(LIBRARY);
+    const after = (await libraryRows(page)).filter((r) => 'Section' === r.type);
+    expect(after[0].name).toBe('Cover');
+    expect(after[after.length - 1].name).toBe('What we do');
+  } finally {
+    // Site-wide state: put the number back, or every later run reads a
+    // library this test rearranged.
+    await page.goto(LIBRARY);
+    await page.locator('.bw-table tbody tr').filter({ hasText: 'What we do' }).first()
+      .getByRole('link', { name: 'Edit' }).click();
+    await expect(page.locator('#order')).toBeVisible();
+    await page.fill('#order', original);
+    await save(page);
+  }
+});

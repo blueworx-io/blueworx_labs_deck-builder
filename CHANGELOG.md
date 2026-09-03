@@ -6,6 +6,19 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-09-03
+
+### Fixed
+
+- The "Get in touch" button on a deck's last page was white text on a white
+  button, so a client could not read the one thing the deck asks them to do. A
+  case study's link was invisible for the same reason.
+- The client's logo on that last page is now big enough to see.
+- A library entry with no order number was sorted in front of the cover, so
+  older entries opened the content library — and every new deck — on the call
+  to action. An entry with no number now sits at the end, where it can be
+  numbered into place.
+
 ## [0.7.1] - 2026-09-03
 
 ### Added

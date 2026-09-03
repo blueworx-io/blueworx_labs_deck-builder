@@ -1004,7 +1004,7 @@ final class Blueworx_Deck_Builder_Editor {
 								// Every deck presents in this order, so it is
 								// set once here rather than argued about per
 								// deck. Lower numbers come first.
-								[ 'id' => 'order', 'kind' => 'number', 'label' => __( 'Order in a deck', 'blueworx-labs-deck-builder' ), 'min' => 0, 'help' => __( 'Lower numbers come first. Entries sharing a number fall back to their name.', 'blueworx-labs-deck-builder' ) ],
+								[ 'id' => 'order', 'kind' => 'number', 'label' => __( 'Order in a deck', 'blueworx-labs-deck-builder' ), 'min' => 0, 'help' => __( 'Lower numbers come first. An entry left at 0 goes last, not first. Entries sharing a number fall back to their name.', 'blueworx-labs-deck-builder' ) ],
 								// One number, whichever sort of entry this is:
 								// a line item's estimate, or the figure a
 								// service slide quotes. Both are the same on

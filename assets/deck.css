@@ -62,7 +62,10 @@
 .bwd-body :where(ul) { list-style: none; }
 .bwd-body img { max-width: 100%; display: block; }
 
-.bwd-body a { color: inherit; }
+/* :where() so this is a default, not a winner. A plain .bwd-body a is one
+   class and one element, which outweighs .bwd-btn and .bwd-link__a — it
+   painted the call to action's label white on its white pill. */
+:where(.bwd-body) a { color: inherit; }
 
 .bwd-body :focus-visible {
   outline: 2px solid var(--bwd-accent-soft);
@@ -306,6 +309,10 @@
 
 .bwd-cta { position: relative; margin: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 26px; }
 .bwd-cta .bwd-lede { max-width: 30ch; }
+/* The client's mark is the only thing of theirs on the closing slide, so it is
+   larger here than the one tucked into a cover's corner. */
+.bwd-cta .bwd-logo { padding: 14px 22px; border-radius: 14px; }
+.bwd-cta .bwd-logo__img { height: 64px; }
 .bwd-btn {
   display: inline-flex;
   align-items: center;

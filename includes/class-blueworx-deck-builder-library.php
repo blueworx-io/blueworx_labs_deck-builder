@@ -112,11 +112,18 @@ final class Blueworx_Deck_Builder_Library {
 	/**
 	 * Where an entry sits in its own list.
 	 *
+	 * An entry nobody has numbered goes to the back rather than the front.
+	 * Read as a plain integer it would be a 0, which is in front of the cover
+	 * — and since a deck is a copy of this order, an entry written before the
+	 * library kept an order, or added since without a number, opened every new
+	 * deck on itself. Numbering starts at 1 for that reason.
+	 *
 	 * @param int $id Entry id.
 	 * @return int
 	 */
 	public static function order_of( $id ) {
-		return (int) self::field( $id, 'order' );
+		$stored = (int) self::field( $id, 'order' );
+		return $stored > 0 ? $stored : PHP_INT_MAX;
 	}
 
 	/**

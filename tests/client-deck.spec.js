@@ -238,3 +238,34 @@ test('the client timeline is split at launch', async ({ page, browser }) => {
 
   await guest.close();
 });
+
+test('the deck ends on a call to action the client can read', async ({ page, browser }) => {
+  const id = await createDeck(page, { client: 'Marlow Joinery', title: 'Workshop site' });
+  await publish(page, 'Marlow Joinery');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // The last slide is dark and its button is a white pill, so the label has to
+  // carry the deck's ink. The base "a { color: inherit }" reset outweighed the
+  // button's own colour once, which painted the label white on white — a
+  // button nobody could read, on the one slide asking the client to act.
+  const button = guestPage.locator('.bwd-btn');
+  await expect(button).toHaveText('Get in touch');
+  const paint = await button.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { color: style.color, background: style.backgroundColor };
+  });
+  expect(paint.color).not.toBe(paint.background);
+  expect(paint.color).toBe('rgb(10, 12, 41)');
+
+  // The case study link is the deck's other anchor, and it makes the same bet.
+  const study = guestPage.locator('.bwd-link__a').first();
+  if (await study.count()) {
+    await expect(study).toHaveCSS('color', 'rgb(165, 167, 255)');
+  }
+
+  await guest.close();
+});
