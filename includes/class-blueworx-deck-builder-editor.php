@@ -37,6 +37,27 @@ final class Blueworx_Deck_Builder_Editor {
 	const OPTION = 'blueworx_deck_builder_settings';
 
 	/**
+	 * What every record here leaves off the library's Publish and settings tab.
+	 *
+	 * None of these records is a page of the site. A deck, a package, a case
+	 * study and a library entry have no excerpt to summarise them, no comments
+	 * to allow, no categories to be found by and nothing to sit underneath. The
+	 * address matters — a deck's is the client link — but it is something to
+	 * copy, never something to retype: changing it breaks a link already sent,
+	 * and the deck's own link is minted when the deck is made.
+	 *
+	 * Status, publish date and author stay. Those are what publishing a record
+	 * actually means, and nothing here would be better for hiding them.
+	 */
+	const PUBLISHING = [
+		'slug'       => 'readonly',
+		'excerpt'    => false,
+		'comments'   => false,
+		'taxonomies' => false,
+		'parent'     => false,
+	];
+
+	/**
 	 * Boot.
 	 *
 	 * @return void
@@ -113,6 +134,13 @@ final class Blueworx_Deck_Builder_Editor {
 							],
 						],
 						[
+							'id'      => 'hosting',
+							'eyebrow' => 'Decks · Hosting fee',
+							'title'   => __( 'Standard hosting fee', 'blueworx-labs-deck-builder' ),
+							'note'    => __( 'What a new deck starts its hosting and management fee at. Each deck keeps its own copy, so changing this never changes a price already quoted.', 'blueworx-labs-deck-builder' ),
+							'fields'  => self::hosting_defaults(),
+						],
+						[
 							'id'      => 'links',
 							'eyebrow' => 'Decks · Client links',
 							'title'   => __( 'Client links', 'blueworx-labs-deck-builder' ),
@@ -125,6 +153,27 @@ final class Blueworx_Deck_Builder_Editor {
 				],
 			],
 		];
+	}
+
+	/**
+	 * The hosting fee fields, shared by the settings screen that sets the
+	 * standard one and the deck panel that carries this client's.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function hosting_defaults() {
+		$fields = [
+			[ 'id' => 'hosting_period', 'kind' => 'text', 'label' => __( 'Fee period', 'blueworx-labs-deck-builder' ), 'default' => 'per month' ],
+		];
+		foreach ( Blueworx_Deck_Builder_Types::currencies() as $code => $currency ) {
+			$fields[] = [
+				'id'    => 'hosting_price_' . strtolower( $code ),
+				'kind'  => 'number',
+				'label' => sprintf( '%s · %s', $currency['label'], $code ),
+				'min'   => 0,
+			];
+		}
+		return $fields;
 	}
 
 	/**
@@ -166,9 +215,10 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'Everything this client will see. Nothing changes on the client link until you save.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::DECK,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'summary'    => [
-				[ 'id' => 'project', 'label' => __( 'Project estimate', 'blueworx-labs-deck-builder' ), 'sum' => 'estimate.hours', 'where' => 'estimate.in_total', 'suffix' => 'hrs', 'foot' => __( 'Work required before launch', 'blueworx-labs-deck-builder' ) ],
-				[ 'id' => 'postlaunch', 'label' => __( 'Post-launch work', 'blueworx-labs-deck-builder' ), 'sum' => 'postlaunch.hours', 'where' => 'postlaunch.in_total', 'suffix' => 'hrs', 'foot' => __( 'Work planned after launch', 'blueworx-labs-deck-builder' ) ],
+				[ 'id' => 'project', 'label' => __( 'Project estimate', 'blueworx-labs-deck-builder' ), 'sum' => 'estimate.hours', 'where' => 'estimate.in_total', 'suffix' => 'hrs', 'foot' => __( 'Estimated, before launch', 'blueworx-labs-deck-builder' ) ],
+				[ 'id' => 'postlaunch', 'label' => __( 'Post-launch work', 'blueworx-labs-deck-builder' ), 'sum' => 'postlaunch.hours', 'where' => 'postlaunch.in_total', 'suffix' => 'hrs', 'foot' => __( 'Estimated, after launch', 'blueworx-labs-deck-builder' ) ],
 				// One cell, not two. The recommendation is worked out from the
 				// project work and the work after launch together, so somebody
 				// reading two figures side by side would be adding them up in
@@ -181,7 +231,6 @@ final class Blueworx_Deck_Builder_Editor {
 					'suffix' => 'hrs',
 					'foot'   => __( 'What the recommendation covers', 'blueworx-labs-deck-builder' ),
 				],
-				[ 'id' => 'phases', 'label' => __( 'Timeline phases', 'blueworx-labs-deck-builder' ), 'count' => 'timeline', 'foot' => __( 'On the client timeline', 'blueworx-labs-deck-builder' ) ],
 			],
 			'tabs'       => [
 				self::deck_overview_tab(),
@@ -189,6 +238,7 @@ final class Blueworx_Deck_Builder_Editor {
 				self::deck_estimate_tab(),
 				self::deck_timeline_tab( $deck ),
 				self::deck_postlaunch_tab(),
+				self::deck_hosting_tab(),
 				self::deck_package_tab( $deck ),
 				self::deck_share_tab( $deck ),
 			],
@@ -215,7 +265,7 @@ final class Blueworx_Deck_Builder_Editor {
 						[ 'id' => 'client', 'kind' => 'text', 'label' => __( 'Client or organisation', 'blueworx-labs-deck-builder' ), 'required' => true ],
 						[ 'id' => 'subtitle', 'kind' => 'textarea', 'label' => __( 'Supporting statement', 'blueworx-labs-deck-builder' ), 'wide' => true, 'help' => __( 'One sentence, under the title on the cover.', 'blueworx-labs-deck-builder' ) ],
 						[ 'id' => 'prepared_for', 'kind' => 'text', 'label' => __( 'Prepared for', 'blueworx-labs-deck-builder' ) ],
-						[ 'id' => 'prepared_date', 'kind' => 'date', 'label' => __( 'Prepared date', 'blueworx-labs-deck-builder' ), 'help' => __( 'Week 1 of the timeline counts forward from this date.', 'blueworx-labs-deck-builder' ) ],
+						[ 'id' => 'prepared_date', 'kind' => 'date', 'label' => __( 'Prepared date', 'blueworx-labs-deck-builder' ), 'help' => __( 'Shown on the cover. The timeline counts in weeks from kick-off, not from here.', 'blueworx-labs-deck-builder' ) ],
 						[ 'id' => 'currency', 'kind' => 'select', 'label' => __( 'Display currency', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Types::currency_options(), 'help' => __( 'Used for every package price this client sees.', 'blueworx-labs-deck-builder' ) ],
 						[ 'id' => 'logo', 'kind' => 'media', 'label' => __( 'Client logo', 'blueworx-labs-deck-builder' ), 'help' => __( 'PNG or SVG, at least 320px wide.', 'blueworx-labs-deck-builder' ) ],
 					],
@@ -289,7 +339,7 @@ final class Blueworx_Deck_Builder_Editor {
 					'id'      => 'work',
 					'eyebrow' => 'Estimate · Before launch',
 					'title'   => __( 'Work required before launch', 'blueworx-labs-deck-builder' ),
-					'note'    => __( 'Every project line item in the content library, copied for this client. Rows fall under their phase, and each phase carries its own subtotal. Only rows with the package switch on count towards the recommendation.', 'blueworx-labs-deck-builder' ),
+					'note'    => __( 'Every project line item in the content library, copied for this client. Hours are an estimate and the client is told so. Rows fall under their phase, phases carry their own subtotal, and the phase itself is the library\'s to set. Only rows with the package switch on count towards the recommendation.', 'blueworx-labs-deck-builder' ),
 					'fields'  => [ self::line_items( 'estimate', Blueworx_Deck_Builder_Types::project_phases() ) ],
 				],
 			],
@@ -311,10 +361,59 @@ final class Blueworx_Deck_Builder_Editor {
 					'id'      => 'after',
 					'eyebrow' => 'Estimate · After launch',
 					'title'   => __( 'Work planned after launch', 'blueworx-labs-deck-builder' ),
-					'note'    => __( 'Every post-launch line item in the content library, copied for this client. This is the ongoing work they should expect once the site is live.', 'blueworx-labs-deck-builder' ),
+					'note'    => __( 'Every post-launch line item in the content library, copied for this client. This is the ongoing work they should expect once the site is live, and the hours are an estimate.', 'blueworx-labs-deck-builder' ),
 					'fields'  => [ self::line_items( 'postlaunch', Blueworx_Deck_Builder_Types::postlaunch_phases() ) ],
 				],
 			],
+		];
+	}
+
+	/**
+	 * Hosting: its own tab, because it is its own thing.
+	 *
+	 * It is not a line on the post-launch estimate and it is not one of the
+	 * support packages — it is the platform the site runs on, billed monthly
+	 * for as long as the site exists. It gets its own slide in the deck for
+	 * the same reason, so this is the tab that fills that slide in.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function deck_hosting_tab() {
+		return [
+			'id'     => 'hosting',
+			'label'  => __( 'Hosting', 'blueworx-labs-deck-builder' ),
+			'panels' => [ self::deck_hosting_panel() ],
+		];
+	}
+
+	/**
+	 * The monthly hosting and management fee for this client.
+	 *
+	 * A price per currency, the same four a package carries, so a deck showing
+	 * rand and a deck showing sterling both have something to show.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function deck_hosting_panel() {
+		$prices = [];
+		foreach ( Blueworx_Deck_Builder_Types::currencies() as $code => $currency ) {
+			$prices[] = [
+				'id'    => 'hosting_price_' . strtolower( $code ),
+				'kind'  => 'number',
+				'label' => sprintf( '%s · %s', $currency['label'], $code ),
+				'min'   => 0,
+			];
+		}
+
+		return [
+			'id'      => 'hosting',
+			'eyebrow' => 'Hosting · Monthly fee',
+			'title'   => __( 'Hosting and management', 'blueworx-labs-deck-builder' ),
+			'note'    => __( 'The fee that covers the platform and the work of keeping it running. Copied from settings when the deck was made, and this client\'s own from then on. The slide is left out entirely when the deck\'s currency has no price here.', 'blueworx-labs-deck-builder' ),
+			'fields'  => array_merge(
+				[ [ 'id' => 'hosting_period', 'kind' => 'text', 'label' => __( 'Fee period', 'blueworx-labs-deck-builder' ), 'help' => __( 'For example, per month.', 'blueworx-labs-deck-builder' ) ] ],
+				$prices
+			),
 		];
 	}
 
@@ -341,7 +440,12 @@ final class Blueworx_Deck_Builder_Editor {
 			'fields'            => [
 				[ 'id' => 'title', 'kind' => 'text', 'label' => __( 'Work item', 'blueworx-labs-deck-builder' ) ],
 				[ 'id' => 'desc', 'kind' => 'text', 'label' => __( 'Description', 'blueworx-labs-deck-builder' ) ],
-				[ 'id' => 'phase', 'kind' => 'select', 'label' => __( 'Phase', 'blueworx-labs-deck-builder' ), 'options' => $phases ],
+				// Read-only, and deliberately still on screen. Which phase a
+				// piece of work belongs to is the content library's decision,
+				// not this client's — it settles the running order of the
+				// timeline, so a deck that moved one would move its own
+				// schedule out from under the estimate it came from.
+				[ 'id' => 'phase', 'kind' => 'select', 'label' => __( 'Phase', 'blueworx-labs-deck-builder' ), 'options' => $phases, 'readonly' => true ],
 				[ 'id' => 'hours', 'kind' => 'number', 'label' => __( 'Hours', 'blueworx-labs-deck-builder' ), 'min' => 0 ],
 				[ 'id' => 'note', 'kind' => 'text', 'label' => __( 'Internal note', 'blueworx-labs-deck-builder' ) ],
 				[ 'id' => 'in_total', 'kind' => 'toggle', 'label' => __( 'In total', 'blueworx-labs-deck-builder' ) ],
@@ -366,23 +470,125 @@ final class Blueworx_Deck_Builder_Editor {
 					'id'      => 'plan',
 					'eyebrow' => 'Client deck · Schedule',
 					'title'   => __( 'Project timeline', 'blueworx-labs-deck-builder' ),
-					'note'    => __( 'Dates are never worked out from estimated hours — set them to match the team\'s real availability.', 'blueworx-labs-deck-builder' ),
+					'note'    => sprintf(
+						/* translators: %d: hours of work assumed per working day. */
+						__( 'Worked out from the two estimates, at %d hours of this client\'s work a day. Nothing here is typed: change an estimate and the schedule follows. A phase appears to the client when its work does.', 'blueworx-labs-deck-builder' ),
+						Blueworx_Deck_Builder_Types::HOURS_PER_DAY
+					),
 					'fields'  => [
 						[
-							'id'     => 'timeline',
-							'kind'   => 'gantt',
-							'label'  => __( 'Phases', 'blueworx-labs-deck-builder' ),
-							// A project runs discovery to growth, in that
-							// order, every time. The weeks are per client; the
-							// running order is not.
-							'fixed'  => true,
-							'origin' => null === $deck ? '' : (string) $deck->get( 'prepared_date' ),
-							'help'   => __( 'The launch milestone separates project work from post-launch work. Exactly one phase may be it.', 'blueworx-labs-deck-builder' ),
+							'id'          => 'schedule',
+							'kind'        => 'schedule',
+							'label'       => __( 'Phases', 'blueworx-labs-deck-builder' ),
+							'bands'       => self::schedule_bands( $deck ),
+							'empty_title' => __( 'Nothing to schedule yet', 'blueworx-labs-deck-builder' ),
+							'empty_text'  => __( 'The schedule fills in once the estimates have hours on them.', 'blueworx-labs-deck-builder' ),
+							'help'        => __( 'Weeks are indicative. Save to bring this up to date after changing hours.', 'blueworx-labs-deck-builder' ),
 						],
 					],
 				],
 			],
 		];
+	}
+
+	/**
+	 * The derived schedule, in the two stretches a project actually has.
+	 *
+	 * Splitting it is the point: everything up to and including launch is one
+	 * piece of work with an end, and everything after it runs for as long as
+	 * the client keeps us. Drawn as one continuous bar chart they read as the
+	 * same commitment, which is exactly the wrong thing for a proposal to say.
+	 *
+	 * The launch milestone closes the first band rather than opening the
+	 * second — it is what the project delivers.
+	 *
+	 * @param Blueworx_Deck_Builder_Deck|null $deck Open deck.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function schedule_bands( $deck ) {
+		if ( null === $deck ) {
+			return [];
+		}
+
+		$bands = [
+			'pre'  => [
+				'id'    => 'pre',
+				'label' => __( 'Development phase', 'blueworx-labs-deck-builder' ),
+				'rows'  => [],
+				'hours' => 0.0,
+			],
+			'post' => [
+				'id'    => 'post',
+				'label' => __( 'Post-launch', 'blueworx-labs-deck-builder' ),
+				'rows'  => [],
+				'hours' => 0.0,
+			],
+		];
+
+		foreach ( $deck->timeline() as $phase ) {
+			$band  = 'post' === $phase['kind'] ? 'post' : 'pre';
+			$hours = 'launch' === $phase['kind']
+				? 0.0
+				: $deck->hours_in_phase( self::estimate_for( $phase['kind'] ), $phase['title'] );
+
+			$bands[ $band ]['hours'] += $hours;
+			$bands[ $band ]['rows'][] = [
+				'id'      => $band . '-' . sanitize_key( $phase['title'] ),
+				'title'   => $phase['title'],
+				'start'   => $phase['start'],
+				'end'     => $phase['end'],
+				'kind'    => $phase['kind'],
+				'visible' => $phase['visible'],
+				'meta'    => 'launch' === $phase['kind']
+					? __( 'Milestone', 'blueworx-labs-deck-builder' )
+					: Blueworx_Deck_Builder_Packages::hours( $hours ) . ' hrs',
+				'note'    => $phase['milestone'],
+			];
+		}
+
+		$out = [];
+		foreach ( $bands as $band ) {
+			if ( ! $band['rows'] ) {
+				continue;
+			}
+			$out[] = [
+				'id'    => $band['id'],
+				'label' => $band['label'],
+				'rows'  => $band['rows'],
+				'meta'  => sprintf(
+					/* translators: 1: hours, 2: number of weeks. */
+					__( '%1$s hrs · %2$d weeks', 'blueworx-labs-deck-builder' ),
+					Blueworx_Deck_Builder_Packages::hours( $band['hours'] ),
+					self::band_weeks( $band['rows'] )
+				),
+			];
+		}
+
+		return $out;
+	}
+
+	/**
+	 * How many weeks a band spans, counted from its own first and last week.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Band rows.
+	 * @return int
+	 */
+	private static function band_weeks( array $rows ) {
+		$starts = array_column( $rows, 'start' );
+		$ends   = array_column( $rows, 'end' );
+		return ( max( $ends ) - min( $starts ) ) + 1;
+	}
+
+	/**
+	 * Which estimate a schedule row's hours came from.
+	 *
+	 * @param string $kind Bar kind.
+	 * @return string
+	 */
+	private static function estimate_for( $kind ) {
+		return 'post' === $kind
+			? Blueworx_Deck_Builder_Library::LIST_POSTLAUNCH
+			: Blueworx_Deck_Builder_Library::LIST_ESTIMATE;
 	}
 
 	/**
@@ -672,6 +878,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'Set this package up once. Every deck that recommends it uses what is here.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::PACKAGE,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'tabs'       => [
 				[
 					'id'     => 'package',
@@ -720,6 +927,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'Past work, ready to drop into any deck.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::CASE_STUDY,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'tabs'       => [
 				[
 					'id'     => 'study',
@@ -770,6 +978,7 @@ final class Blueworx_Deck_Builder_Editor {
 			'lede'       => __( 'A section or a line item every new deck starts with. Changing it here changes what the next deck begins with; decks already made keep their own copy.', 'blueworx-labs-deck-builder' ),
 			'post_type'  => Blueworx_Deck_Builder_Types::LIBRARY,
 			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
+			'publishing' => self::PUBLISHING,
 			'tabs'       => [
 				[
 					'id'     => 'entry',
@@ -796,6 +1005,12 @@ final class Blueworx_Deck_Builder_Editor {
 								// set once here rather than argued about per
 								// deck. Lower numbers come first.
 								[ 'id' => 'order', 'kind' => 'number', 'label' => __( 'Order in a deck', 'blueworx-labs-deck-builder' ), 'min' => 0, 'help' => __( 'Lower numbers come first. Entries sharing a number fall back to their name.', 'blueworx-labs-deck-builder' ) ],
+								// One number, whichever sort of entry this is:
+								// a line item's estimate, or the figure a
+								// service slide quotes. Both are the same on
+								// every deck, which is why they live here
+								// rather than being retyped per client.
+								[ 'id' => 'hours', 'kind' => 'number', 'label' => __( 'Hours', 'blueworx-labs-deck-builder' ), 'min' => 0, 'help' => __( 'For a line item, the estimate it carries into a deck. For a service slide, the hours quoted on it — leave it at zero to quote none.', 'blueworx-labs-deck-builder' ) ],
 							],
 						],
 						[
@@ -834,8 +1049,7 @@ final class Blueworx_Deck_Builder_Editor {
 									],
 									'default'    => Blueworx_Deck_Builder_Library::LIST_ESTIMATE,
 								],
-								[ 'depends_on' => self::SHOWN_FOR_LINE_ITEM, 'id' => 'phase', 'kind' => 'select', 'label' => __( 'Phase', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Types::every_phase(), 'help' => __( 'The two estimates group by their own phases. Pick one that belongs to the list above, or the row lands under "not assigned to a phase".', 'blueworx-labs-deck-builder' ) ],
-								[ 'depends_on' => self::SHOWN_FOR_LINE_ITEM, 'id' => 'hours', 'kind' => 'number', 'label' => __( 'Hours', 'blueworx-labs-deck-builder' ), 'min' => 0 ],
+								[ 'depends_on' => self::SHOWN_FOR_LINE_ITEM, 'id' => 'phase', 'kind' => 'select', 'label' => __( 'Phase', 'blueworx-labs-deck-builder' ), 'options' => Blueworx_Deck_Builder_Types::every_phase(), 'help' => __( 'Set here and nowhere else — a deck cannot change it. The phase decides where this work sits on the timeline, so pick one that belongs to the estimate above.', 'blueworx-labs-deck-builder' ) ],
 							],
 						],
 					],

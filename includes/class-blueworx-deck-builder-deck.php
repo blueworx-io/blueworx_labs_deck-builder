@@ -139,6 +139,16 @@ final class Blueworx_Deck_Builder_Deck {
 		update_post_meta( $id, 'bw_deck_link_slug', self::mint_slug() );
 		update_post_meta( $id, 'bw_deck_link_enabled', true );
 
+		// The hosting fee is the same for most clients, so it is set once in
+		// settings and copied here. From this moment it is this deck's own
+		// number, the way everything else copied on creation is — changing the
+		// standing fee cannot change a price a client has already been quoted.
+		update_post_meta( $id, 'bw_deck_hosting_period', (string) Blueworx_Deck_Builder_Editor::setting( 'hosting_period', __( 'per month', 'blueworx-labs-deck-builder' ) ) );
+		foreach ( array_keys( Blueworx_Deck_Builder_Types::currencies() ) as $code ) {
+			$field = 'hosting_price_' . strtolower( $code );
+			update_post_meta( $id, 'bw_deck_' . $field, (float) Blueworx_Deck_Builder_Editor::setting( $field, 0 ) );
+		}
+
 		Blueworx_Deck_Builder_Starter::load_into( (int) $id );
 
 		return (int) $id;
@@ -330,6 +340,137 @@ final class Blueworx_Deck_Builder_Deck {
 	}
 
 	/**
+	 * The schedule, worked out from the two estimates and nothing else.
+	 *
+	 * Nobody types a timeline any more. A phase lasts as long as its estimated
+	 * hours say it lasts, at Types::HOURS_PER_DAY hours of this client's work
+	 * a day, and the phases run in the order the phase lists declare — so
+	 * changing an estimate moves the schedule, and the two can never disagree.
+	 * There are no calendar dates: a start date is not something a proposal
+	 * knows.
+	 *
+	 * A phase with no hours in it is not a phase of this project and gets no
+	 * bar. A phase whose work is all held back from the client is still real
+	 * work — it takes its days out of the schedule — but the client does not
+	 * see it, because the timeline shows what the estimates show.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function timeline() {
+		$rows = [];
+
+		$lists = [
+			Blueworx_Deck_Builder_Library::LIST_ESTIMATE   => 'pre',
+			Blueworx_Deck_Builder_Library::LIST_POSTLAUNCH => 'post',
+		];
+
+		foreach ( $lists as $which => $kind ) {
+			// Each stretch counts its own weeks from week one. The work after
+			// launch is not week fourteen of the build — it is a retainer that
+			// starts when the site goes live and has no end, and numbering it
+			// on from the project would read as one job that runs for ever.
+			$days  = 0.0;
+			$added = 0;
+
+			foreach ( $this->phase_work( $which ) as $phase => $work ) {
+				if ( $work['hours'] <= 0 ) {
+					continue;
+				}
+				++$added;
+				$rows[] = self::schedule_row(
+					$phase,
+					implode( ' · ', $work['items'] ),
+					'',
+					$kind,
+					$work['shown'],
+					ceil( $work['hours'] / Blueworx_Deck_Builder_Types::HOURS_PER_DAY ),
+					$days
+				);
+			}
+
+			// The launch closes the project rather than opening the retainer:
+			// it is what the project delivers, so it is the last bar of the
+			// first stretch and counted on the first stretch's own weeks.
+			if ( 'pre' === $kind && $added > 0 ) {
+				$rows[] = self::schedule_row(
+					__( 'Launch', 'blueworx-labs-deck-builder' ),
+					__( 'The site goes live.', 'blueworx-labs-deck-builder' ),
+					__( 'Launch', 'blueworx-labs-deck-builder' ),
+					'launch',
+					true,
+					1.0,
+					$days
+				);
+			}
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * One phase's bar, and the days it takes out of the schedule.
+	 *
+	 * @param string $title     Phase name.
+	 * @param string $desc      What is in it, for the client.
+	 * @param string $milestone Milestone label, or an empty string.
+	 * @param string $kind      One of pre, launch, post.
+	 * @param bool   $shown     Whether the client sees it.
+	 * @param float  $length    How many working days it takes.
+	 * @param float  $days      Days used so far, advanced by this row.
+	 * @return array<string,mixed>
+	 */
+	private static function schedule_row( $title, $desc, $milestone, $kind, $shown, $length, &$days ) {
+		$per_week = Blueworx_Deck_Builder_Types::DAYS_PER_WEEK;
+		$start    = (int) floor( $days / $per_week ) + 1;
+		$days    += max( 1.0, (float) $length );
+
+		return [
+			'title'     => $title,
+			'desc'      => $desc,
+			'milestone' => $milestone,
+			'start'     => $start,
+			'end'       => max( $start, (int) ceil( $days / $per_week ) ),
+			'kind'      => $kind,
+			'visible'   => (bool) $shown,
+		];
+	}
+
+	/**
+	 * One estimate's work, gathered under each phase, in the order the phase
+	 * list declares. A row whose phase is not on that list keeps its hours in
+	 * the totals but has nowhere to sit on a schedule, so it falls in at the
+	 * end rather than disappearing.
+	 *
+	 * @param string $which Which estimate.
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function phase_work( $which ) {
+		$out = [];
+		foreach ( Blueworx_Deck_Builder_Types::phase_names( $which ) as $phase ) {
+			$out[ $phase ] = [ 'hours' => 0.0, 'items' => [], 'shown' => false ];
+		}
+
+		foreach ( $this->rows( $which ) as $row ) {
+			$phase = trim( (string) ( $row['phase'] ?? '' ) );
+			if ( '' === $phase ) {
+				$phase = __( 'Other work', 'blueworx-labs-deck-builder' );
+			}
+			if ( ! isset( $out[ $phase ] ) ) {
+				$out[ $phase ] = [ 'hours' => 0.0, 'items' => [], 'shown' => false ];
+			}
+			if ( ! empty( $row['in_total'] ) ) {
+				$out[ $phase ]['hours'] += (float) ( $row['hours'] ?? 0 );
+			}
+			if ( ! empty( $row['show_client'] ) ) {
+				$out[ $phase ]['shown']   = true;
+				$out[ $phase ]['items'][] = (string) ( $row['title'] ?? '' );
+			}
+		}
+
+		return $out;
+	}
+
+	/**
 	 * Subtotals per phase for one list, in the order the phases first appear.
 	 *
 	 * @param string $field Repeater field id.
@@ -381,10 +522,10 @@ final class Blueworx_Deck_Builder_Deck {
 	 */
 	public function readiness() {
 		$recommendation = $this->recommendation();
-		$has_launch     = false;
-		foreach ( $this->rows( 'timeline' ) as $phase ) {
-			if ( 'launch' === ( $phase['kind'] ?? '' ) ) {
-				$has_launch = true;
+		$scheduled      = false;
+		foreach ( $this->timeline() as $phase ) {
+			if ( ! empty( $phase['visible'] ) ) {
+				$scheduled = true;
 			}
 		}
 
@@ -406,8 +547,8 @@ final class Blueworx_Deck_Builder_Deck {
 				'done'  => (bool) $this->rows( 'postlaunch' ),
 			],
 			[
-				'label' => __( 'Timeline has a launch milestone', 'blueworx-labs-deck-builder' ),
-				'done'  => $has_launch,
+				'label' => __( 'Timeline has something to show', 'blueworx-labs-deck-builder' ),
+				'done'  => $scheduled,
 			],
 			[
 				'label' => __( 'A package can be recommended', 'blueworx-labs-deck-builder' ),
@@ -465,8 +606,47 @@ final class Blueworx_Deck_Builder_Deck {
 				'postlaunch' => $this->postlaunch_total(),
 			],
 			'package'       => $this->client_package( $recommendation ),
+			'hosting'       => $this->client_hosting(),
 			'case_studies'  => $this->client_case_studies(),
 		];
+	}
+
+	/**
+	 * The monthly hosting and management fee, in this deck's currency, or null
+	 * when nobody has set one. A hosting slide with no price on it is a slide
+	 * describing work the client has no way to buy, so the section is left out
+	 * rather than shown half-finished.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public function client_hosting() {
+		$amount = (float) $this->get( 'hosting_price_' . strtolower( $this->currency() ), 0 );
+		if ( $amount <= 0 ) {
+			return null;
+		}
+		return [
+			'price'  => Blueworx_Deck_Builder_Packages::money( $amount, $this->currency() ),
+			'period' => (string) $this->get( 'hosting_period', __( 'per month', 'blueworx-labs-deck-builder' ) ),
+			'hours'  => $this->hours_in_phase( Blueworx_Deck_Builder_Library::LIST_POSTLAUNCH, 'Hosting and management' ),
+		];
+	}
+
+	/**
+	 * Hours counted towards one named phase of one estimate.
+	 *
+	 * @param string $which Which estimate.
+	 * @param string $phase Phase name.
+	 * @return float
+	 */
+	public function hours_in_phase( $which, $phase ) {
+		$total = 0.0;
+		foreach ( $this->rows( $which ) as $row ) {
+			if ( empty( $row['in_total'] ) || trim( (string) ( $row['phase'] ?? '' ) ) !== $phase ) {
+				continue;
+			}
+			$total += (float) ( $row['hours'] ?? 0 );
+		}
+		return $total;
 	}
 
 	/**
@@ -524,18 +704,17 @@ final class Blueworx_Deck_Builder_Deck {
 	 */
 	private function client_timeline() {
 		$out = [];
-		foreach ( $this->rows( 'timeline' ) as $phase ) {
+		foreach ( $this->timeline() as $phase ) {
 			if ( empty( $phase['visible'] ) ) {
 				continue;
 			}
-			$kind  = (string) ( $phase['kind'] ?? 'pre' );
 			$out[] = [
-				'title'     => (string) ( $phase['title'] ?? '' ),
-				'desc'      => (string) ( $phase['desc'] ?? '' ),
-				'milestone' => (string) ( $phase['milestone'] ?? '' ),
-				'start'     => max( 1, (int) ( $phase['start'] ?? 1 ) ),
-				'end'       => max( 1, (int) ( $phase['end'] ?? 1 ) ),
-				'kind'      => in_array( $kind, [ 'pre', 'launch', 'post' ], true ) ? $kind : 'pre',
+				'title'     => (string) $phase['title'],
+				'desc'      => (string) $phase['desc'],
+				'milestone' => (string) $phase['milestone'],
+				'start'     => max( 1, (int) $phase['start'] ),
+				'end'       => max( 1, (int) $phase['end'] ),
+				'kind'      => $phase['kind'],
 			];
 		}
 		return $out;

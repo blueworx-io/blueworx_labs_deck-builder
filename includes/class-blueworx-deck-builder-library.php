@@ -193,7 +193,11 @@ final class Blueworx_Deck_Builder_Library {
 			'eyebrow' => (string) self::field( $id, 'eyebrow' ),
 			'body'    => (string) self::field( $id, 'body' ),
 			'points'  => (string) self::field( $id, 'points' ),
-			'hours'   => 0,
+			// A service slide shows the hours that service usually takes, and
+			// that is the same figure on every deck — so it comes from the
+			// library rather than being retyped per client. A deck can still
+			// change its own copy.
+			'hours'   => (float) self::field( $id, 'hours' ),
 			'strap'   => (string) self::field( $id, 'strap' ),
 			'note'    => (string) self::field( $id, 'note' ),
 			'visible' => true,

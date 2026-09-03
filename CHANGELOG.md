@@ -6,6 +6,65 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-03
+
+### Added
+
+- Hosting is its own tab in the editor and its own page in the deck: the
+  platform, the upkeep behind it — servers, updates, databases and mail — and
+  what it costs a month. It carries a price in each of the four currencies, set
+  once in Settings and copied onto every new deck. The page stands whether or not
+  a fee has been quoted yet; the price appears once it has.
+- A Reviews and reverts phase, before QA and testing, so a client sees the
+  finished work and asks for changes before anything is tested.
+- The content library now arrives already written, from the standard BlueWorx
+  deck: every slide's wording, and every line item on both estimates. It updates
+  itself on a plugin update, and leaves anything you have edited exactly as it is.
+
+### Changed
+
+- Every slide showing hours or a price now says outright that the figures are
+  estimates and are subject to change.
+- The timeline is worked out from the estimates rather than typed. A phase lasts
+  as long as its hours say it lasts, at four hours of work a day, phases run in
+  the order the estimates declare, and a phase appears to the client only when its
+  work does. Nothing on the tab is editable, and the calendar-date view is gone —
+  a proposal does not know when the project starts.
+- The timeline is split at launch, on the client deck and in the editor:
+  Development phase, then Post-launch. A project has an end and a retainer does
+  not, and one unbroken chart read as the same commitment. Each counts its own
+  weeks from week one, and in the editor they are tabs — one plan on screen at a
+  time. Launch closes the development phase rather than opening the retainer.
+- Disabled dropdowns no longer draw a row of WordPress chevrons across the field.
+- Which phase a piece of work belongs to is now set in the content library and
+  shown, read-only, on a deck. It decides where the work lands on the timeline, so
+  a deck moving one would move its own schedule.
+- Project management is now post-launch work rather than project work.
+- Competitor research, content and editing, and the accessibility pass have been
+  dropped from the project estimate; performance optimisation and SEO from the
+  post-launch estimate. Feature improvements is now Post-launch updates.
+- Text boxes in wp-admin wear the design system's rounded corner and border again,
+  instead of WordPress's own square 2px one.
+
+## [0.6.0] - 2026-09-03
+
+### Changed
+
+- The fourth tile on the Decks screen is now Potential earnings: what every open
+  deck's recommended package is worth a month if they all land. It is always in
+  pounds, whatever currency a deck displays for its client, and nothing is
+  converted — the figure is the pound price somebody actually set on the package.
+  Archived decks are left out, and a deck with no recommendation adds nothing.
+- Editing a deck, a package, a case study or a library entry no longer offers an
+  excerpt, comments, categories and tags, or a parent and template. None of these
+  records is a page of the site and none of that applied to them.
+- A record's address is now shown in full with a Copy button instead of being
+  typed into. Changing it broke links already sent, and a deck's link is made when
+  the deck is.
+- Rows in Sections, Project estimate and Post-launch now run one field per line at
+  full width, each row in its own card, instead of eight controls squeezed across
+  one wrapping line.
+
 ## [0.5.0] - 2026-09-02
 
 ### Changed

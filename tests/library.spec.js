@@ -8,22 +8,32 @@ test.beforeAll(async ({ browser }) => {
 test.use({ storageState: AUTH_STATE });
 
 test('a new deck arrives as a copy of the whole library', async ({ page }) => {
+  // Counted off the library screen rather than written down here. A site that
+  // has had an entry added to it is still a site whose next deck must copy all
+  // of them, and a hardcoded number would only ever prove this ran on a fresh
+  // install.
+  await page.goto(LIBRARY);
+  const inLibrary = async (kind) =>
+    page.locator('.bw-table tbody tr').filter({ hasText: kind }).count();
+  const sections = await inLibrary('Section');
+  const project = await inLibrary('Project line item');
+  const after = await inLibrary('Post-launch line item');
+  expect(sections).toBeGreaterThan(0);
+
   const id = await createDeck(page, { client: 'Ferry Lane Bakery', title: 'New site' });
 
-  // Fourteen sections in the library, fourteen rows on the deck. There is no
-  // second list any more, so this is the only place either number comes from.
   await openEditor(page, id, 'Sections');
-  await expect(page.locator('.bw-repeater__row')).toHaveCount(14);
+  await expect(page.locator('.bw-repeater__row')).toHaveCount(sections);
   await expect(page.locator('.bw-repeater__row').first().locator('input[type=text]').first()).toHaveValue('Cover');
 
   // Every line item, in the list it belongs to, and all of them counting.
   await openEditor(page, id, 'Project estimate');
-  await expect(page.locator('.bw-repeater__row')).toHaveCount(16);
-  await expect(page.locator('.bw-summary__cell').first()).toContainText('272');
+  await expect(page.locator('.bw-repeater__row')).toHaveCount(project);
+  await expect(page.locator('.bw-summary__cell').first()).toContainText('242');
 
   await openEditor(page, id, 'Post-launch');
-  await expect(page.locator('.bw-repeater__row')).toHaveCount(6);
-  await expect(page.locator('.bw-summary__cell').nth(1)).toContainText('64');
+  await expect(page.locator('.bw-repeater__row')).toHaveCount(after);
+  await expect(page.locator('.bw-summary__cell').nth(1)).toContainText('100');
 });
 
 test('a deck cannot add, remove or reorder a section', async ({ page }) => {
@@ -70,22 +80,19 @@ test('the estimate cannot add or remove a line item either', async ({ page }) =>
   await expect(page.locator('.bw-repeater__row').first().locator('.bw-switch input')).toHaveCount(3);
 });
 
-test('the timeline runs in one order, and offers no way to change it', async ({ page }) => {
-  const id = await createDeck(page, { client: 'Pennine Legal', title: 'Firm website' });
-  await openEditor(page, id, 'Timeline');
+test('a deck cannot move a line item to a different phase', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Halstead Dental', title: 'Practice site' });
+  await openEditor(page, id, 'Project estimate');
 
-  await expect(page.locator('.bw-gantt__row')).toHaveCount(8);
-  await expect(page.locator('.bw-gantt__legend .bw-btn')).toHaveCount(0);
+  // The phase decides where this work lands on the timeline, so it belongs to
+  // the library. It still shows — a row with no phase on it reads as a row
+  // missing information — but nobody may change it here.
+  const phase = page.locator('.bw-repeater__row').first().locator('select');
+  await expect(phase).toBeDisabled();
+  await expect(phase).toHaveValue('Discovery');
 
-  const first = page.locator('.bw-gantt__row').first();
-  await expect(first.getByRole('button', { name: /^Move/ })).toHaveCount(0);
-  await expect(first.getByRole('button', { name: /^Duplicate/ })).toHaveCount(0);
-  await expect(first.getByRole('button', { name: /^Remove/ })).toHaveCount(0);
-
-  // Editing a phase and hiding one from the client both stay: the schedule is
-  // settled, the dates and the wording are not.
-  await expect(first.getByRole('button', { name: /^Edit/ })).toBeVisible();
-  await expect(first.getByRole('button', { name: /the client$/ })).toBeVisible();
+  // Hours are still this client's to set. Read-only is one cell, not the row.
+  await expect(page.locator('.bw-repeater__row').first().locator('input[type=number]')).toBeEnabled();
 });
 
 test('the content library can be edited and deleted, but not added to', async ({ page }) => {

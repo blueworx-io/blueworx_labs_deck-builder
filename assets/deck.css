@@ -136,6 +136,9 @@
 
 .bwd-note { font-size: 19px; color: var(--bwd-faint); margin-top: auto; }
 .bwd-slide--light .bwd-note { color: var(--bwd-muted); }
+/* The estimate caveat sits under whatever note a slide already carries, so it
+   does not take the margin that pushes that note to the foot of the slide. */
+.bwd-note--estimate { font-size: 17px; font-style: italic; margin-top: 10px; }
 
 /* --- Decoration ----------------------------------------------------------- */
 
@@ -200,6 +203,15 @@
 .bwd-point__n { font-size: 20px; color: var(--bwd-accent-soft); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .bwd-point__text { font-size: 26px; line-height: 1.35; }
 
+/* --- Hosting fee ---------------------------------------------------------- */
+
+/* The price is the point of this slide, so it is set like a headline rather
+   than like the hours pill beside it on a service slide. */
+.bwd-fee { display: flex; align-items: baseline; gap: 16px; align-self: flex-start; }
+.bwd-fee__n { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.bwd-fee__label { font-size: 22px; color: var(--bwd-faint); }
+.bwd-fee__hours { font-size: 20px; color: var(--bwd-faint); }
+
 /* --- Estimate ------------------------------------------------------------- */
 
 .bwd-phases { display: grid; grid-template-columns: 1fr 1fr; gap: 0 70px; }
@@ -238,6 +250,10 @@
 
 .bwd-tl { display: flex; flex-direction: column; gap: 12px; }
 .bwd-tl__row { display: grid; grid-template-columns: 276px 1fr; gap: 24px; align-items: center; }
+/* Names the stretch of rows under it, so the plan reads as build-then-support
+   rather than as one commitment that never ends. */
+.bwd-tl__band { font-size: 17px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--bwd-faint); padding-top: 14px; border-top: 1px solid var(--bwd-rule); }
+.bwd-tl__band:first-child { padding-top: 0; border-top: 0; }
 .bwd-tl__title { font-size: 22px; font-weight: 600; }
 .bwd-tl__range { font-size: 18px; color: var(--bwd-muted); }
 .bwd-tl__track { position: relative; height: 44px; background: var(--bwd-wash); border-radius: 10px; }
@@ -441,6 +457,9 @@
   .bwd-point__text { font-size: 17px; }
   .bwd-hours__n { font-size: 28px; }
   .bwd-hours__label { font-size: 15px; }
+  .bwd-fee__n { font-size: 40px; }
+  .bwd-fee__label { font-size: 15px; }
+  .bwd-fee__hours { font-size: 14px; }
   .bwd-strap { font-size: 20px; }
 
   .bwd-phase__name, .bwd-phase__n { font-size: 18px; }

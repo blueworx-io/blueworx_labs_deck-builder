@@ -48,7 +48,7 @@ test('a sales agent can build a deck', async ({ page, browser }) => {
   // the editor, with its record read back.
   const id = await createDeck(agent.page, { client: 'Marsden Joinery', title: 'Workshop site' });
   await openEditor(agent.page, id, 'Project estimate');
-  await expect(agent.page.locator('.bw-summary__cell').first()).toContainText('272');
+  await expect(agent.page.locator('.bw-summary__cell').first()).toContainText('242');
 
   await agent.context.close();
 });

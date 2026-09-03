@@ -286,7 +286,21 @@ final class Blueworx_Deck_Builder_Packages {
 		if ( null === $amount ) {
 			return null;
 		}
-		$symbol = Blueworx_Deck_Builder_Types::currencies()[ $currency ]['symbol'];
+		return self::money( $amount, $currency );
+	}
+
+	/**
+	 * An amount written the way this deck writes money. Prices live in more
+	 * than one place now — a package, and the monthly hosting fee — and two
+	 * of them formatting differently would read as two different things.
+	 *
+	 * @param float|int $amount   Amount.
+	 * @param string    $currency Currency code.
+	 * @return string
+	 */
+	public static function money( $amount, $currency ) {
+		$currency = Blueworx_Deck_Builder_Deck::clean_currency( $currency );
+		$symbol   = Blueworx_Deck_Builder_Types::currencies()[ $currency ]['symbol'];
 		return $symbol . number_format_i18n( (float) $amount, 0 );
 	}
 

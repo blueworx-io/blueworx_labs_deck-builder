@@ -172,6 +172,19 @@ final class Blueworx_Deck_Builder_Render {
 	}
 
 	/**
+	 * The line every commercial slide carries. Hours and prices on a proposal
+	 * are estimates, and saying so once at the bottom of one slide is not
+	 * saying it — so it appears wherever a number does.
+	 *
+	 * @return void
+	 */
+	private static function estimate_note() {
+		?>
+		<p class="bwd-note bwd-note--estimate"><?php esc_html_e( 'Hours and pricing shown are estimates and are subject to change as the work is scoped in detail.', 'blueworx-labs-deck-builder' ); ?></p>
+		<?php
+	}
+
+	/**
 	 * What a section is called in the navigation.
 	 *
 	 * @param array<string,mixed> $section Section.
@@ -199,7 +212,7 @@ final class Blueworx_Deck_Builder_Render {
 	 * @return void
 	 */
 	private static function section( array $section, array $payload, $number, $total ) {
-		$dark  = in_array( $section['kind'], [ 'cover', 'service', 'package', 'process', 'casestudy', 'cta' ], true );
+		$dark  = in_array( $section['kind'], [ 'cover', 'service', 'package', 'hosting', 'process', 'casestudy', 'cta' ], true );
 		$class = 'bwd-slide bwd-slide--' . ( $dark ? 'dark' : 'light' ) . ' bwd-slide--' . $section['kind'];
 		?>
 		<section class="<?php echo esc_attr( $class ); ?>" data-bwd-slide aria-label="<?php echo esc_attr( self::section_name( $section, $number ) ); ?>">
@@ -226,6 +239,9 @@ final class Blueworx_Deck_Builder_Render {
 						break;
 					case 'postlaunch':
 						self::postlaunch( $section, $payload );
+						break;
+					case 'hosting':
+						self::hosting( $section, $payload );
 						break;
 					case 'process':
 						self::process( $section, $payload );
@@ -415,6 +431,60 @@ final class Blueworx_Deck_Builder_Render {
 		</div>
 		<p class="bwd-note"><?php esc_html_e( 'Estimates cover the work described above. Two rounds of revisions are included at each stage.', 'blueworx-labs-deck-builder' ); ?></p>
 		<?php
+		self::estimate_note();
+	}
+
+	/**
+	 * Hosting and management: the monthly fee, and what it covers.
+	 *
+	 * @param array<string,mixed> $section Section.
+	 * @param array<string,mixed> $payload Client payload.
+	 * @return void
+	 */
+	private static function hosting( array $section, array $payload ) {
+		$hosting = $payload['hosting'];
+		$points  = self::lines( $section['points'] );
+		?>
+		<div class="bwd-two">
+			<div class="bwd-two__left">
+				<?php self::eyebrow( $section, __( 'Infrastructure', 'blueworx-labs-deck-builder' ) ); ?>
+				<h2 class="bwd-h1"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : __( 'Hosting and management', 'blueworx-labs-deck-builder' ) ); ?></h2>
+				<?php if ( '' !== $section['body'] ) : ?>
+					<p class="bwd-lede"><?php echo esc_html( $section['body'] ); ?></p>
+				<?php endif; ?>
+				<?php // The page stands on its own: it describes the platform whether or not a fee has been quoted for this client yet. ?>
+				<?php if ( null !== $hosting ) : ?>
+					<div class="bwd-fee">
+						<p class="bwd-fee__n"><?php echo esc_html( $hosting['price'] ); ?></p>
+						<p class="bwd-fee__label"><?php echo esc_html( $hosting['period'] ); ?></p>
+					</div>
+					<?php if ( $hosting['hours'] > 0 ) : ?>
+						<p class="bwd-fee__hours">
+							<?php
+							printf(
+								/* translators: %s: hours. */
+								esc_html__( 'Around %s hours of managed upkeep a month.', 'blueworx-labs-deck-builder' ),
+								esc_html( Blueworx_Deck_Builder_Packages::hours( $hosting['hours'] ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( '' !== $section['strap'] ) : ?>
+					<p class="bwd-strap"><?php echo esc_html( $section['strap'] ); ?></p>
+				<?php endif; ?>
+			</div>
+			<div class="bwd-two__right">
+				<?php foreach ( $points as $index => $point ) : ?>
+					<div class="bwd-point">
+						<p class="bwd-point__n"><?php echo esc_html( sprintf( '%02d', $index + 1 ) ); ?></p>
+						<p class="bwd-point__text"><?php echo esc_html( $point ); ?></p>
+					</div>
+				<?php endforeach; ?>
+				<?php self::estimate_note(); ?>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**
@@ -489,6 +559,7 @@ final class Blueworx_Deck_Builder_Render {
 			<?php endforeach; ?>
 		</div>
 		<?php
+		self::estimate_note();
 	}
 
 	/**
@@ -499,16 +570,39 @@ final class Blueworx_Deck_Builder_Render {
 	 * @return void
 	 */
 	private static function timeline( array $section, array $payload ) {
-		$max = 1;
+		// A scale per stretch, not one for the slide. Each counts its own weeks
+		// from week one, so a single scale would draw the shorter of the two as
+		// a stub of a plan it has nothing to do with.
+		$scale = [ 'pre' => 1, 'post' => 1 ];
 		foreach ( $payload['timeline'] as $phase ) {
-			$max = max( $max, $phase['end'] );
+			$in           = 'post' === $phase['kind'] ? 'post' : 'pre';
+			$scale[ $in ] = max( $scale[ $in ], $phase['end'] );
 		}
 		?>
 		<?php self::eyebrow( $section ); ?>
 		<h2 class="bwd-h2"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : __( 'Project timeline', 'blueworx-labs-deck-builder' ) ); ?></h2>
 		<div class="bwd-tl">
+			<?php $band = ''; ?>
 			<?php foreach ( $payload['timeline'] as $phase ) : ?>
 				<?php
+				// The two stretches get a heading between them. Everything up
+				// to and including launch is a piece of work with an end;
+				// everything after runs for as long as the client keeps us,
+				// and one unbroken chart reads as the same commitment.
+				$in = 'post' === $phase['kind'] ? 'post' : 'pre';
+				if ( $in !== $band ) {
+					$band = $in;
+					printf(
+						'<p class="bwd-tl__band">%s</p>',
+						esc_html(
+							'post' === $in
+								? __( 'Post-launch', 'blueworx-labs-deck-builder' )
+								: __( 'Development phase', 'blueworx-labs-deck-builder' )
+						)
+					);
+				}
+
+				$max   = $scale[ $in ];
 				$left  = ( ( $phase['start'] - 1 ) / $max ) * 100;
 				$width = max( 3.5, ( ( $phase['end'] - $phase['start'] + 1 ) / $max ) * 100 );
 				$text  = '' !== $phase['milestone'] ? $phase['milestone'] : $phase['desc'];
@@ -560,8 +654,17 @@ final class Blueworx_Deck_Builder_Render {
 			<span class="bwd-key bwd-key--launch"></span><?php esc_html_e( 'Launch', 'blueworx-labs-deck-builder' ); ?>
 			<span class="bwd-key bwd-key--post"></span><?php esc_html_e( 'After launch', 'blueworx-labs-deck-builder' ); ?>
 		</div>
-		<p class="bwd-note"><?php esc_html_e( 'Weeks are indicative and confirmed at kick-off.', 'blueworx-labs-deck-builder' ); ?></p>
+		<p class="bwd-note">
+			<?php
+			printf(
+				/* translators: %d: hours of work assumed per working day. */
+				esc_html__( 'Worked out from the estimated hours, at %d hours of work a day. Weeks are indicative and confirmed at kick-off.', 'blueworx-labs-deck-builder' ),
+				(int) Blueworx_Deck_Builder_Types::HOURS_PER_DAY
+			);
+			?>
+		</p>
 		<?php
+		self::estimate_note();
 	}
 
 	/**
@@ -605,6 +708,7 @@ final class Blueworx_Deck_Builder_Render {
 			<?php endforeach; ?>
 		</div>
 		<?php
+		self::estimate_note();
 	}
 
 	/**

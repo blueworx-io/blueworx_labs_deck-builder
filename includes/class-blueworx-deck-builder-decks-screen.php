@@ -261,22 +261,18 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 	 * @return void
 	 */
 	private static function stats( array $decks ) {
-		$live      = 0;
-		$hours     = 0.0;
-		$attention = 0;
+		$live  = 0;
+		$hours = 0.0;
 		foreach ( $decks as $deck ) {
 			$live  += $deck->link_live() ? 1 : 0;
 			$hours += $deck->project_total();
-			if ( 'CUSTOM' === $deck->recommendation()['state'] ) {
-				++$attention;
-			}
 		}
 
 		$tiles = [
 			[ 'layout-dashboard', __( 'Decks', 'blueworx-labs-deck-builder' ), (string) count( $decks ), __( 'Drafts, published and archived', 'blueworx-labs-deck-builder' ) ],
 			[ 'link', __( 'Live client links', 'blueworx-labs-deck-builder' ), (string) $live, __( 'Open without a WordPress login', 'blueworx-labs-deck-builder' ) ],
 			[ 'clock', __( 'Hours estimated', 'blueworx-labs-deck-builder' ), Blueworx_Deck_Builder_Packages::hours( $hours ), __( 'Across every project estimate', 'blueworx-labs-deck-builder' ) ],
-			[ 'triangle-alert', __( 'Need attention', 'blueworx-labs-deck-builder' ), (string) $attention, __( 'Above the largest package', 'blueworx-labs-deck-builder' ) ],
+			[ 'trending-up', __( 'Potential earnings', 'blueworx-labs-deck-builder' ), self::potential( $decks ), __( 'Total monthly potential', 'blueworx-labs-deck-builder' ) ],
 		];
 		?>
 		<div class="bw-stats">
@@ -313,6 +309,43 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 		if ( isset( $messages[ $done ] ) ) {
 			Blueworx_Deck_Builder_Admin::notice( $messages[ $done ][0], $messages[ $done ][1], $messages[ $done ][2], $messages[ $done ][3] );
 		}
+	}
+
+	/**
+	 * What the open decks are worth a month if every recommendation lands.
+	 *
+	 * Always in pounds, whatever currency each deck displays. A deck's currency
+	 * is a presentation choice made for the client reading it; this figure is
+	 * for the people selling, and a total that mixed rand, dollars and pounds
+	 * into one number would be worse than no total at all. There is no
+	 * conversion here and there should not be — a package carries a real price
+	 * per currency, so the pound price is a price somebody set, not a rate
+	 * somebody guessed.
+	 *
+	 * Archived decks are left out: an archived deck is not going to land. A
+	 * deck with no recommendation, or one flagged for a custom package, adds
+	 * nothing — as does a package nobody has given a pound price. Each of
+	 * those is a gap, and a gap counted as zero is honest in a way that
+	 * guessing at it would not be.
+	 *
+	 * @param array<int,Blueworx_Deck_Builder_Deck> $decks Every deck.
+	 * @return string
+	 */
+	private static function potential( array $decks ) {
+		$total = 0.0;
+		foreach ( $decks as $deck ) {
+			if ( 'archived' === $deck->status() ) {
+				continue;
+			}
+			$package = $deck->recommendation()['package'];
+			if ( null === $package ) {
+				continue;
+			}
+			$total += (float) ( $package['prices']['GBP'] ?? 0 );
+		}
+
+		$symbol = Blueworx_Deck_Builder_Types::currencies()['GBP']['symbol'];
+		return $symbol . number_format_i18n( $total, 0 );
 	}
 
 	/* --- Actions ------------------------------------------------------------ */
