@@ -79,6 +79,41 @@ test('a dropdown draws one arrow, not two', async ({ page }) => {
   expect(fits).toBe(true);
 });
 
+test('a read-only dropdown draws one arrow too', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Girvan Marine', title: 'Charter site' });
+  await openEditor(page, id, 'Project estimate');
+
+  // WordPress puts its chevron back for the disabled state specifically, from a
+  // rule that outweighs the one that took it away — and it arrives tiled rather
+  // than once, because the shared input rule sets `background` as a shorthand
+  // and so resets repeat to its default. Forty chevrons across the field.
+  const phase = page.locator('.bw-repeater__row .bw-select__el').first();
+  await expect(phase).toBeDisabled();
+  await expect(phase).toHaveCSS('background-image', 'none');
+  await expect(phase).toHaveCSS('background-repeat', 'no-repeat');
+});
+
+test('wp-admin does not square off the design system controls', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Ashcombe Press', title: 'Catalogue site' });
+  await openEditor(page, id);
+
+  // WordPress styles inputs by attribute — input[type="text"] and a dozen
+  // siblings — which outweighs a single class and puts its own 2px corner and
+  // grey border on ours. Every control the design system draws on a real input
+  // is checked, not just the one that was noticed: this went wrong one class at
+  // a time, and a test that named one would have kept doing so.
+  await expect(page.locator('.bw-titleinput')).toHaveCSS('border-radius', '12px');
+  await expect(page.locator('.bw-input').first()).toHaveCSS('border-radius', '8px');
+  await expect(page.locator('.bw-textarea').first()).toHaveCSS('border-radius', '8px');
+  await expect(page.locator('.bw-select__el').first()).toHaveCSS('border-radius', '8px');
+
+  // WordPress's border is #949494 in every case, so the colour is the other
+  // half of the same claim — a rounded box wearing WordPress's grey is still
+  // wearing WordPress's rule.
+  await expect(page.locator('.bw-input').first())
+    .not.toHaveCSS('border-top-color', 'rgb(148, 148, 148)');
+});
+
 test('the estimate groups its rows by phase and subtotals each group', async ({ page }) => {
   const id = await createDeck(page, { client: 'Ridgeway Trust', title: 'Site rebuild' });
   await openEditor(page, id, 'Project estimate');
@@ -111,18 +146,34 @@ test('the timeline follows the estimate rather than being typed', async ({ page 
   const id = await createDeck(page, { client: 'Selby Group', title: 'Programme brief' });
   await openEditor(page, id, 'Timeline');
 
-  // Eleven project phases, the launch itself, then eight phases of work after
-  // it. Nothing on the screen edits any of them: there is no control here at
-  // all, which is the point.
-  const rows = page.locator('.bw-panels .bw-table tbody tr');
-  await expect(rows).toHaveCount(20);
+  // Two stretches, one on screen at a time. A project has an end and a
+  // retainer does not, so they are separate plans rather than one long one.
+  const tabs = page.locator('.bw-schedule .bw-step');
+  await expect(tabs).toHaveCount(2);
+  await expect(tabs.nth(0)).toHaveText('Development phase');
+  await expect(tabs.nth(1)).toHaveText('Post-launch');
+
+  // Eleven project phases, and the launch closing them out — it is what the
+  // project delivers, so it ends the first stretch rather than opening the
+  // second. Nothing on the screen edits any of it, which is the point.
+  const rows = page.locator('.bw-schedule__row');
+  await expect(rows).toHaveCount(12);
   await expect(rows.first()).toContainText('Discovery');
+  await expect(rows.last()).toContainText('Launch');
+  await expect(page.locator('.bw-schedule__bar--launch')).toHaveCount(1);
   await expect(page.locator('.bw-panels input, .bw-panels select, .bw-panels textarea')).toHaveCount(0);
 
   // Discovery is 12 hours, which at four hours a day is three days — inside
   // week one. Doubling it pushes the phase into a second week, and every
   // phase after it moves along with it.
   await expect(rows.first()).toContainText('Week 1');
+
+  // The retainer counts its own weeks from one. Numbered on from the build it
+  // would read as one job that never ends.
+  await tabs.nth(1).click();
+  await expect(page.locator('.bw-schedule__row')).toHaveCount(8);
+  await expect(page.locator('.bw-schedule__row').first()).toContainText('Week 1');
+  await expect(page.locator('.bw-schedule__bar--launch')).toHaveCount(0);
 
   await openEditor(page, id, 'Project estimate');
   const hours = page.locator('.bw-repeater__row input[type=number]').first();
@@ -131,7 +182,7 @@ test('the timeline follows the estimate rather than being typed', async ({ page 
   await save(page);
 
   await openEditor(page, id, 'Timeline');
-  await expect(page.locator('.bw-panels .bw-table tbody tr').first()).toContainText('Weeks 1–2');
+  await expect(page.locator('.bw-schedule__row').first()).toContainText('Weeks 1–2');
 });
 
 test('the deck recommends the smallest package that covers the work', async ({ page }) => {

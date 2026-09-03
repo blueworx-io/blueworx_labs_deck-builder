@@ -169,27 +169,31 @@ test('the deck reads as a presentation on a desktop and as a document on a phone
   await guest.close();
 });
 
-test('the hosting slide appears only once the fee is set, and says what it costs', async ({ page, browser }) => {
+test('hosting gets its own page, and the fee lands on it when it is set', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Loxley Foods', title: 'Trade site' });
-
-  // No fee, no slide. A hosting page describing work with no price on it is a
-  // page the client cannot act on, so the section is left out entirely.
   await publish(page, 'Loxley Foods');
   const link = await linkFor(page, id);
 
   const guest = await browser.newContext({ storageState: undefined });
   const guestPage = await guest.newPage();
   await guestPage.goto(link);
-  await expect(guestPage.locator('.bwd-slide--hosting')).toHaveCount(0);
 
-  // A deck shows one currency, so the fee has to be set in that one. The
+  // One hosting page, always — it describes the platform whether or not this
+  // client has been quoted for it yet. It used to be two slides saying the
+  // same thing from either side.
+  const slide = guestPage.locator('.bwd-slide--hosting');
+  await expect(slide).toHaveCount(1);
+  await expect(guestPage.locator('.bwd-slide--service')).toHaveCount(3);
+  await expect(slide.locator('.bwd-fee__n')).toHaveCount(0);
+
+  // The fee has its own tab now, not a panel on the post-launch estimate. A
+  // deck shows one currency, so the price has to be set in that one; the
   // default is sterling.
-  await openEditor(page, id, 'Post-launch');
+  await openEditor(page, id, 'Hosting');
   await page.fill('#hosting_price_gbp', '450');
   await save(page);
 
   await guestPage.goto(link);
-  const slide = guestPage.locator('.bwd-slide--hosting');
   await expect(slide.locator('.bwd-fee__n')).toHaveText('£450');
   await expect(slide).toContainText('per month');
 
@@ -208,9 +212,29 @@ test('every slide carrying a number says the number is an estimate', async ({ pa
   // The estimate, the timeline, the work after launch and the package: four
   // slides quoting hours or money, and the caveat has to be on each of them
   // rather than once at the back of the deck.
-  await expect(guestPage.locator('.bwd-note--estimate')).toHaveCount(4);
+  await expect(guestPage.locator('.bwd-note--estimate')).toHaveCount(5);
   await expect(guestPage.locator('.bwd-slide--estimate .bwd-note--estimate'))
     .toContainText(/estimates and are subject to change/i);
+
+  await guest.close();
+});
+
+test('the client timeline is split at launch', async ({ page, browser }) => {
+  const id = await createDeck(page, { client: 'Coledale Trust', title: 'Charity site' });
+  await publish(page, 'Coledale Trust');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // A project has an end and a retainer does not. Drawn as one unbroken run of
+  // bars they read as the same commitment, which is the wrong thing for a
+  // proposal to say — so the two stretches carry their own headings.
+  const bands = guestPage.locator('.bwd-slide--timeline .bwd-tl__band');
+  await expect(bands).toHaveCount(2);
+  await expect(bands.nth(0)).toHaveText('Development phase');
+  await expect(bands.nth(1)).toHaveText('Post-launch');
 
   await guest.close();
 });

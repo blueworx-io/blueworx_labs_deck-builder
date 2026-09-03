@@ -10,10 +10,11 @@ All notable changes to this plugin are recorded here. The format is
 
 ### Added
 
-- A Hosting and management slide, covering the monthly hosting fee and the work
-  behind it — servers, updates, databases and mail. It carries a price in each of
-  the four currencies, set once in Settings and copied onto every new deck, and
-  the slide is left out when the deck's currency has no price on it.
+- Hosting is its own tab in the editor and its own page in the deck: the
+  platform, the upkeep behind it — servers, updates, databases and mail — and
+  what it costs a month. It carries a price in each of the four currencies, set
+  once in Settings and copied onto every new deck. The page stands whether or not
+  a fee has been quoted yet; the price appears once it has.
 - A Reviews and reverts phase, before QA and testing, so a client sees the
   finished work and asks for changes before anything is tested.
 - The content library now arrives already written, from the standard BlueWorx
@@ -29,6 +30,12 @@ All notable changes to this plugin are recorded here. The format is
   the order the estimates declare, and a phase appears to the client only when its
   work does. Nothing on the tab is editable, and the calendar-date view is gone —
   a proposal does not know when the project starts.
+- The timeline is split at launch, on the client deck and in the editor:
+  Development phase, then Post-launch. A project has an end and a retainer does
+  not, and one unbroken chart read as the same commitment. Each counts its own
+  weeks from week one, and in the editor they are tabs — one plan on screen at a
+  time. Launch closes the development phase rather than opening the retainer.
+- Disabled dropdowns no longer draw a row of WordPress chevrons across the field.
 - Which phase a piece of work belongs to is now set in the content library and
   shown, read-only, on a deck. It decides where the work lands on the timeline, so
   a deck moving one would move its own schedule.

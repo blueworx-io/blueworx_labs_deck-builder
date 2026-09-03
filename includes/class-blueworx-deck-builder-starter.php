@@ -27,7 +27,7 @@ final class Blueworx_Deck_Builder_Starter {
 	/**
 	 * Which edition of the library content this file holds.
 	 */
-	const SEED_VERSION = 2;
+	const SEED_VERSION = 3;
 
 	/**
 	 * Where that number is remembered.
@@ -62,6 +62,10 @@ final class Blueworx_Deck_Builder_Starter {
 		'Estimate summary',
 		'Recommended support package',
 		'Post-launch work',
+		// The hosting service slide and the hosting fee slide were the same
+		// offer described from either side. They are one page now, under the
+		// 'hosting' key, so the second one goes.
+		'Hosting and management',
 	];
 
 	/**
@@ -256,14 +260,18 @@ final class Blueworx_Deck_Builder_Starter {
 				'points'  => "Content updates, turned around quickly\nProactive monitoring of speed, uptime and security\nEnhancements aligned to goals as they change\nRegular reviews and roadmap planning with your team",
 				'strap'   => "Always on.\nAlways with you.",
 			],
+			// One hosting page, not two. The service slide and the fee slide
+			// were describing the same offer from either side — what it does,
+			// and what it costs — and a client reading them back to back had
+			// no way to tell they were one thing.
 			[
 				'key'     => 'hosting',
-				'title'   => 'Hosting',
-				'kind'    => 'service',
+				'title'   => 'Hosting and management',
+				'kind'    => 'hosting',
 				'eyebrow' => 'Services',
-				'note'    => 'Fast, secure, always available.',
-				'body'    => 'Managed hosting is the secure, high-performance foundation that keeps your website fast, stable and ready to grow.',
-				'points'  => "Enterprise-grade security, with firewalls, SSL and DDoS protection\nOptimised servers and caching, for fast loading anywhere\n24/7 monitoring, so problems are caught before you see them\nAutomated backups and straightforward recovery\nCapacity that grows with your platform and its traffic",
+				'note'    => 'The platform, the upkeep, and what it costs a month.',
+				'body'    => 'Managed hosting is the secure, high-performance foundation that keeps your website fast, stable and ready to grow. The monthly fee covers the platform itself and the work of keeping every part of it current, secure and backed up.',
+				'points'  => "Enterprise-grade security, with firewalls, SSL and DDoS protection\nOptimised servers and caching, for fast loading anywhere\nWordPress core, theme and plugin updates, tested before they ship\nDatabase upkeep, with automated backups and tested recovery\nMail and transactional sending, kept deliverable\n24/7 monitoring, so problems are caught before you see them",
 				'strap'   => "Fast, secure.\nAlways available.",
 			],
 			[
@@ -287,16 +295,6 @@ final class Blueworx_Deck_Builder_Starter {
 				'eyebrow' => 'Ongoing',
 				'note'    => 'Built from the post-launch estimate.',
 				'body'    => 'The work that carries on once the site is live, and what it is expected to take.',
-			],
-			[
-				'key'     => 'hosting-management',
-				'title'   => 'Hosting and management',
-				'kind'    => 'hosting',
-				'eyebrow' => 'Infrastructure',
-				'note'    => 'The monthly hosting fee, and the work behind it.',
-				'body'    => 'Your site runs on infrastructure we manage end to end. The monthly fee covers the platform itself and the work of keeping every part of it current, secure and backed up.',
-				'points'  => "Servers, certificates and DNS, managed and monitored\nWordPress core, theme and plugin updates, tested before they ship\nDatabase upkeep, with automated backups and tested recovery\nMail and transactional sending, kept deliverable\nUptime, security and performance watched around the clock",
-				'strap'   => 'Managed end to end.',
 			],
 			[
 				'key'     => 'package',

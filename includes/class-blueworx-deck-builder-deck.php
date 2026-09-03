@@ -358,7 +358,6 @@ final class Blueworx_Deck_Builder_Deck {
 	 */
 	public function timeline() {
 		$rows = [];
-		$days = 0.0;
 
 		$lists = [
 			Blueworx_Deck_Builder_Library::LIST_ESTIMATE   => 'pre',
@@ -366,22 +365,18 @@ final class Blueworx_Deck_Builder_Deck {
 		];
 
 		foreach ( $lists as $which => $kind ) {
-			if ( 'post' === $kind && $rows ) {
-				$rows[] = self::schedule_row(
-					__( 'Launch', 'blueworx-labs-deck-builder' ),
-					__( 'The site goes live.', 'blueworx-labs-deck-builder' ),
-					__( 'Launch', 'blueworx-labs-deck-builder' ),
-					'launch',
-					true,
-					1.0,
-					$days
-				);
-			}
+			// Each stretch counts its own weeks from week one. The work after
+			// launch is not week fourteen of the build — it is a retainer that
+			// starts when the site goes live and has no end, and numbering it
+			// on from the project would read as one job that runs for ever.
+			$days  = 0.0;
+			$added = 0;
 
 			foreach ( $this->phase_work( $which ) as $phase => $work ) {
 				if ( $work['hours'] <= 0 ) {
 					continue;
 				}
+				++$added;
 				$rows[] = self::schedule_row(
 					$phase,
 					implode( ' · ', $work['items'] ),
@@ -389,6 +384,21 @@ final class Blueworx_Deck_Builder_Deck {
 					$kind,
 					$work['shown'],
 					ceil( $work['hours'] / Blueworx_Deck_Builder_Types::HOURS_PER_DAY ),
+					$days
+				);
+			}
+
+			// The launch closes the project rather than opening the retainer:
+			// it is what the project delivers, so it is the last bar of the
+			// first stretch and counted on the first stretch's own weeks.
+			if ( 'pre' === $kind && $added > 0 ) {
+				$rows[] = self::schedule_row(
+					__( 'Launch', 'blueworx-labs-deck-builder' ),
+					__( 'The site goes live.', 'blueworx-labs-deck-builder' ),
+					__( 'Launch', 'blueworx-labs-deck-builder' ),
+					'launch',
+					true,
+					1.0,
 					$days
 				);
 			}

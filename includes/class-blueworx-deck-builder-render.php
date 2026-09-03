@@ -166,8 +166,6 @@ final class Blueworx_Deck_Builder_Render {
 				return (bool) $payload['timeline'];
 			case 'package':
 				return null !== $payload['package'];
-			case 'hosting':
-				return null !== $payload['hosting'];
 			default:
 				return true;
 		}
@@ -454,20 +452,23 @@ final class Blueworx_Deck_Builder_Render {
 				<?php if ( '' !== $section['body'] ) : ?>
 					<p class="bwd-lede"><?php echo esc_html( $section['body'] ); ?></p>
 				<?php endif; ?>
-				<div class="bwd-fee">
-					<p class="bwd-fee__n"><?php echo esc_html( $hosting['price'] ); ?></p>
-					<p class="bwd-fee__label"><?php echo esc_html( $hosting['period'] ); ?></p>
-				</div>
-				<?php if ( $hosting['hours'] > 0 ) : ?>
-					<p class="bwd-fee__hours">
-						<?php
-						printf(
-							/* translators: %s: hours. */
-							esc_html__( 'Around %s hours of managed upkeep a month.', 'blueworx-labs-deck-builder' ),
-							esc_html( Blueworx_Deck_Builder_Packages::hours( $hosting['hours'] ) )
-						);
-						?>
-					</p>
+				<?php // The page stands on its own: it describes the platform whether or not a fee has been quoted for this client yet. ?>
+				<?php if ( null !== $hosting ) : ?>
+					<div class="bwd-fee">
+						<p class="bwd-fee__n"><?php echo esc_html( $hosting['price'] ); ?></p>
+						<p class="bwd-fee__label"><?php echo esc_html( $hosting['period'] ); ?></p>
+					</div>
+					<?php if ( $hosting['hours'] > 0 ) : ?>
+						<p class="bwd-fee__hours">
+							<?php
+							printf(
+								/* translators: %s: hours. */
+								esc_html__( 'Around %s hours of managed upkeep a month.', 'blueworx-labs-deck-builder' ),
+								esc_html( Blueworx_Deck_Builder_Packages::hours( $hosting['hours'] ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( '' !== $section['strap'] ) : ?>
 					<p class="bwd-strap"><?php echo esc_html( $section['strap'] ); ?></p>
@@ -569,16 +570,39 @@ final class Blueworx_Deck_Builder_Render {
 	 * @return void
 	 */
 	private static function timeline( array $section, array $payload ) {
-		$max = 1;
+		// A scale per stretch, not one for the slide. Each counts its own weeks
+		// from week one, so a single scale would draw the shorter of the two as
+		// a stub of a plan it has nothing to do with.
+		$scale = [ 'pre' => 1, 'post' => 1 ];
 		foreach ( $payload['timeline'] as $phase ) {
-			$max = max( $max, $phase['end'] );
+			$in           = 'post' === $phase['kind'] ? 'post' : 'pre';
+			$scale[ $in ] = max( $scale[ $in ], $phase['end'] );
 		}
 		?>
 		<?php self::eyebrow( $section ); ?>
 		<h2 class="bwd-h2"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : __( 'Project timeline', 'blueworx-labs-deck-builder' ) ); ?></h2>
 		<div class="bwd-tl">
+			<?php $band = ''; ?>
 			<?php foreach ( $payload['timeline'] as $phase ) : ?>
 				<?php
+				// The two stretches get a heading between them. Everything up
+				// to and including launch is a piece of work with an end;
+				// everything after runs for as long as the client keeps us,
+				// and one unbroken chart reads as the same commitment.
+				$in = 'post' === $phase['kind'] ? 'post' : 'pre';
+				if ( $in !== $band ) {
+					$band = $in;
+					printf(
+						'<p class="bwd-tl__band">%s</p>',
+						esc_html(
+							'post' === $in
+								? __( 'Post-launch', 'blueworx-labs-deck-builder' )
+								: __( 'Development phase', 'blueworx-labs-deck-builder' )
+						)
+					);
+				}
+
+				$max   = $scale[ $in ];
 				$left  = ( ( $phase['start'] - 1 ) / $max ) * 100;
 				$width = max( 3.5, ( ( $phase['end'] - $phase['start'] + 1 ) / $max ) * 100 );
 				$text  = '' !== $phase['milestone'] ? $phase['milestone'] : $phase['desc'];

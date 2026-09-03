@@ -250,6 +250,10 @@
 
 .bwd-tl { display: flex; flex-direction: column; gap: 12px; }
 .bwd-tl__row { display: grid; grid-template-columns: 276px 1fr; gap: 24px; align-items: center; }
+/* Names the stretch of rows under it, so the plan reads as build-then-support
+   rather than as one commitment that never ends. */
+.bwd-tl__band { font-size: 17px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--bwd-faint); padding-top: 14px; border-top: 1px solid var(--bwd-rule); }
+.bwd-tl__band:first-child { padding-top: 0; border-top: 0; }
 .bwd-tl__title { font-size: 22px; font-weight: 600; }
 .bwd-tl__range { font-size: 18px; color: var(--bwd-muted); }
 .bwd-tl__track { position: relative; height: 44px; background: var(--bwd-wash); border-radius: 10px; }

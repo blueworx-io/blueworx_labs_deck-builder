@@ -238,6 +238,7 @@ final class Blueworx_Deck_Builder_Editor {
 				self::deck_estimate_tab(),
 				self::deck_timeline_tab( $deck ),
 				self::deck_postlaunch_tab(),
+				self::deck_hosting_tab(),
 				self::deck_package_tab( $deck ),
 				self::deck_share_tab( $deck ),
 			],
@@ -363,18 +364,33 @@ final class Blueworx_Deck_Builder_Editor {
 					'note'    => __( 'Every post-launch line item in the content library, copied for this client. This is the ongoing work they should expect once the site is live, and the hours are an estimate.', 'blueworx-labs-deck-builder' ),
 					'fields'  => [ self::line_items( 'postlaunch', Blueworx_Deck_Builder_Types::postlaunch_phases() ) ],
 				],
-				self::deck_hosting_panel(),
 			],
+		];
+	}
+
+	/**
+	 * Hosting: its own tab, because it is its own thing.
+	 *
+	 * It is not a line on the post-launch estimate and it is not one of the
+	 * support packages — it is the platform the site runs on, billed monthly
+	 * for as long as the site exists. It gets its own slide in the deck for
+	 * the same reason, so this is the tab that fills that slide in.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function deck_hosting_tab() {
+		return [
+			'id'     => 'hosting',
+			'label'  => __( 'Hosting', 'blueworx-labs-deck-builder' ),
+			'panels' => [ self::deck_hosting_panel() ],
 		];
 	}
 
 	/**
 	 * The monthly hosting and management fee for this client.
 	 *
-	 * It sits on the post-launch tab because that is what it is: work that
-	 * runs for as long as the site does. A price per currency, the same four
-	 * a package carries, so a deck showing rand and a deck showing sterling
-	 * both have something to show.
+	 * A price per currency, the same four a package carries, so a deck showing
+	 * rand and a deck showing sterling both have something to show.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -461,17 +477,13 @@ final class Blueworx_Deck_Builder_Editor {
 					),
 					'fields'  => [
 						[
-							'id'      => 'schedule',
-							'kind'    => 'table',
-							'label'   => __( 'Phases', 'blueworx-labs-deck-builder' ),
-							'columns' => [
-								__( 'Phase', 'blueworx-labs-deck-builder' ),
-								__( 'Weeks', 'blueworx-labs-deck-builder' ),
-								__( 'Hours', 'blueworx-labs-deck-builder' ),
-								__( 'Shown to the client', 'blueworx-labs-deck-builder' ),
-							],
-							'rows'    => self::schedule_rows( $deck ),
-							'help'    => __( 'Weeks are indicative. Save to bring this up to date after changing hours.', 'blueworx-labs-deck-builder' ),
+							'id'          => 'schedule',
+							'kind'        => 'schedule',
+							'label'       => __( 'Phases', 'blueworx-labs-deck-builder' ),
+							'bands'       => self::schedule_bands( $deck ),
+							'empty_title' => __( 'Nothing to schedule yet', 'blueworx-labs-deck-builder' ),
+							'empty_text'  => __( 'The schedule fills in once the estimates have hours on them.', 'blueworx-labs-deck-builder' ),
+							'help'        => __( 'Weeks are indicative. Save to bring this up to date after changing hours.', 'blueworx-labs-deck-builder' ),
 						],
 					],
 				],
@@ -480,43 +492,91 @@ final class Blueworx_Deck_Builder_Editor {
 	}
 
 	/**
-	 * The derived schedule, as the rows a table draws.
+	 * The derived schedule, in the two stretches a project actually has.
+	 *
+	 * Splitting it is the point: everything up to and including launch is one
+	 * piece of work with an end, and everything after it runs for as long as
+	 * the client keeps us. Drawn as one continuous bar chart they read as the
+	 * same commitment, which is exactly the wrong thing for a proposal to say.
+	 *
+	 * The launch milestone closes the first band rather than opening the
+	 * second — it is what the project delivers.
 	 *
 	 * @param Blueworx_Deck_Builder_Deck|null $deck Open deck.
-	 * @return array<int,array<int,string>>
+	 * @return array<int,array<string,mixed>>
 	 */
-	private static function schedule_rows( $deck ) {
+	private static function schedule_bands( $deck ) {
 		if ( null === $deck ) {
-			return [ [ __( 'Open a deck to see its schedule.', 'blueworx-labs-deck-builder' ), '—', '—', '—' ] ];
+			return [];
 		}
 
-		$rows = [];
-		foreach ( $deck->timeline() as $phase ) {
-			$weeks = $phase['start'] === $phase['end']
-				? sprintf(
-					/* translators: %d: week number. */
-					__( 'Week %d', 'blueworx-labs-deck-builder' ),
-					$phase['start']
-				)
-				: sprintf(
-					/* translators: 1: first week, 2: last week. */
-					__( 'Weeks %1$d–%2$d', 'blueworx-labs-deck-builder' ),
-					$phase['start'],
-					$phase['end']
-				);
-			$hours = 'launch' === $phase['kind']
-				? '—'
-				: Blueworx_Deck_Builder_Packages::hours( $deck->hours_in_phase( self::estimate_for( $phase['kind'] ), $phase['title'] ) ) . ' hrs';
+		$bands = [
+			'pre'  => [
+				'id'    => 'pre',
+				'label' => __( 'Development phase', 'blueworx-labs-deck-builder' ),
+				'rows'  => [],
+				'hours' => 0.0,
+			],
+			'post' => [
+				'id'    => 'post',
+				'label' => __( 'Post-launch', 'blueworx-labs-deck-builder' ),
+				'rows'  => [],
+				'hours' => 0.0,
+			],
+		];
 
-			$rows[] = [
-				$phase['title'],
-				$weeks,
-				$hours,
-				$phase['visible'] ? __( 'Yes', 'blueworx-labs-deck-builder' ) : __( 'No', 'blueworx-labs-deck-builder' ),
+		foreach ( $deck->timeline() as $phase ) {
+			$band  = 'post' === $phase['kind'] ? 'post' : 'pre';
+			$hours = 'launch' === $phase['kind']
+				? 0.0
+				: $deck->hours_in_phase( self::estimate_for( $phase['kind'] ), $phase['title'] );
+
+			$bands[ $band ]['hours'] += $hours;
+			$bands[ $band ]['rows'][] = [
+				'id'      => $band . '-' . sanitize_key( $phase['title'] ),
+				'title'   => $phase['title'],
+				'start'   => $phase['start'],
+				'end'     => $phase['end'],
+				'kind'    => $phase['kind'],
+				'visible' => $phase['visible'],
+				'meta'    => 'launch' === $phase['kind']
+					? __( 'Milestone', 'blueworx-labs-deck-builder' )
+					: Blueworx_Deck_Builder_Packages::hours( $hours ) . ' hrs',
+				'note'    => $phase['milestone'],
 			];
 		}
 
-		return $rows ? $rows : [ [ __( 'No hours estimated yet.', 'blueworx-labs-deck-builder' ), '—', '—', '—' ] ];
+		$out = [];
+		foreach ( $bands as $band ) {
+			if ( ! $band['rows'] ) {
+				continue;
+			}
+			$out[] = [
+				'id'    => $band['id'],
+				'label' => $band['label'],
+				'rows'  => $band['rows'],
+				'meta'  => sprintf(
+					/* translators: 1: hours, 2: number of weeks. */
+					__( '%1$s hrs · %2$d weeks', 'blueworx-labs-deck-builder' ),
+					Blueworx_Deck_Builder_Packages::hours( $band['hours'] ),
+					self::band_weeks( $band['rows'] )
+				),
+			];
+		}
+
+		return $out;
+	}
+
+	/**
+	 * How many weeks a band spans, counted from its own first and last week.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Band rows.
+	 * @return int
+	 */
+	private static function band_weeks( array $rows ) {
+		$starts = array_column( $rows, 'start' );
+		$ends   = array_column( $rows, 'end' );
+		return ( max( $ends ) - min( $starts ) ) + 1;
 	}
 
 	/**
