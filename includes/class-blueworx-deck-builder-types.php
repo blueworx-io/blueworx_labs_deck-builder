@@ -21,6 +21,16 @@ final class Blueworx_Deck_Builder_Types {
 	const LIBRARY    = 'bw_library_item';
 
 	/**
+	 * How much of a day actually goes on one client's work, and how many days
+	 * of that there are in a week. The timeline is worked out from estimated
+	 * hours and nothing else, so these two numbers are what turns an estimate
+	 * into a schedule. Four rather than eight because a working day is not
+	 * eight hours of one project.
+	 */
+	const HOURS_PER_DAY = 4;
+	const DAYS_PER_WEEK = 5;
+
+	/**
 	 * Boot.
 	 *
 	 * @return void
@@ -74,17 +84,17 @@ final class Blueworx_Deck_Builder_Types {
 		return self::options(
 			[
 				'Discovery',
-				'Research',
-				'Strategy',
-				'Content',
 				'UX and wireframes',
 				'UI design',
 				'Prototyping',
 				'Development',
 				'Integrations',
 				'Migration',
+				// Before testing, not after it. The client sees the finished
+				// work and asks for changes here; QA then tests what they
+				// actually agreed to, rather than being run twice.
+				'Reviews and reverts',
 				'QA and testing',
-				'Project management',
 				'Launch and deployment',
 				'Training and handover',
 			]
@@ -101,11 +111,16 @@ final class Blueworx_Deck_Builder_Types {
 			[
 				'Launch monitoring',
 				'Content updates',
-				'Performance optimisation',
-				'Search optimisation',
-				'Feature improvements',
+				// What lands in the first weeks after go-live: the things
+				// nobody could see until the site was real.
+				'Post-launch updates',
 				'Ongoing development',
+				'Hosting and management',
 				'Support and maintenance',
+				// Running the work is running the relationship, and the
+				// relationship carries on after launch. It sits here rather
+				// than on the project estimate for that reason.
+				'Project management',
 				'Reporting and reviews',
 				'Training',
 			]
@@ -124,6 +139,21 @@ final class Blueworx_Deck_Builder_Types {
 	}
 
 	/**
+	 * One phase list as plain names, in the order the work runs. This order is
+	 * the timeline: a phase's place on the schedule is where it sits here, not
+	 * anything anybody sets per deck.
+	 *
+	 * @param string $which Either estimate or postlaunch.
+	 * @return array<int,string>
+	 */
+	public static function phase_names( $which ) {
+		$phases = Blueworx_Deck_Builder_Library::LIST_POSTLAUNCH === $which
+			? self::postlaunch_phases()
+			: self::project_phases();
+		return array_column( $phases, 'value' );
+	}
+
+	/**
 	 * The section types a deck can be built from.
 	 *
 	 * @return array<int,array<string,string>>
@@ -137,6 +167,7 @@ final class Blueworx_Deck_Builder_Types {
 			[ 'value' => 'package', 'label' => 'Recommended support package' ],
 			[ 'value' => 'timeline', 'label' => 'Project timeline' ],
 			[ 'value' => 'postlaunch', 'label' => 'Post-launch work' ],
+			[ 'value' => 'hosting', 'label' => 'Hosting and management' ],
 			[ 'value' => 'process', 'label' => 'Our process' ],
 			[ 'value' => 'projects', 'label' => 'Past projects intro' ],
 			[ 'value' => 'casestudy', 'label' => 'Case study' ],

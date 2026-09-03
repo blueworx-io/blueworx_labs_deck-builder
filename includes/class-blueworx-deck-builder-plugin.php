@@ -21,6 +21,7 @@ final class Blueworx_Deck_Builder_Plugin {
 	public static function boot() {
 		Blueworx_Deck_Builder_Roles::register();
 		Blueworx_Deck_Builder_Types::register();
+		Blueworx_Deck_Builder_Starter::register();
 		Blueworx_Deck_Builder_Editor::register();
 		Blueworx_Deck_Builder_Link::register();
 		Blueworx_Deck_Builder_Admin::instance()->register();
@@ -32,8 +33,10 @@ final class Blueworx_Deck_Builder_Plugin {
 	 * client links work immediately, and seed the packages, case studies and
 	 * library entries a fresh install needs to be usable.
 	 *
-	 * Activation does not run on an update, so the role is also checked on
-	 * every request — see Blueworx_Deck_Builder_Roles::maybe_install().
+	 * Activation does not run on an update, so the role and the library
+	 * content are both checked on every request instead — see
+	 * Blueworx_Deck_Builder_Roles::maybe_install() and
+	 * Blueworx_Deck_Builder_Starter::maybe_seed().
 	 *
 	 * @return void
 	 */

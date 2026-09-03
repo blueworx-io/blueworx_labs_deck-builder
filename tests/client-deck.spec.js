@@ -168,3 +168,49 @@ test('the deck reads as a presentation on a desktop and as a document on a phone
 
   await guest.close();
 });
+
+test('the hosting slide appears only once the fee is set, and says what it costs', async ({ page, browser }) => {
+  const id = await createDeck(page, { client: 'Loxley Foods', title: 'Trade site' });
+
+  // No fee, no slide. A hosting page describing work with no price on it is a
+  // page the client cannot act on, so the section is left out entirely.
+  await publish(page, 'Loxley Foods');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+  await expect(guestPage.locator('.bwd-slide--hosting')).toHaveCount(0);
+
+  // A deck shows one currency, so the fee has to be set in that one. The
+  // default is sterling.
+  await openEditor(page, id, 'Post-launch');
+  await page.fill('#hosting_price_gbp', '450');
+  await save(page);
+
+  await guestPage.goto(link);
+  const slide = guestPage.locator('.bwd-slide--hosting');
+  await expect(slide.locator('.bwd-fee__n')).toHaveText('£450');
+  await expect(slide).toContainText('per month');
+
+  await guest.close();
+});
+
+test('every slide carrying a number says the number is an estimate', async ({ page, browser }) => {
+  const id = await createDeck(page, { client: 'Thwaite Legal', title: 'Firm site' });
+  await publish(page, 'Thwaite Legal');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // The estimate, the timeline, the work after launch and the package: four
+  // slides quoting hours or money, and the caveat has to be on each of them
+  // rather than once at the back of the deck.
+  await expect(guestPage.locator('.bwd-note--estimate')).toHaveCount(4);
+  await expect(guestPage.locator('.bwd-slide--estimate .bwd-note--estimate'))
+    .toContainText(/estimates and are subject to change/i);
+
+  await guest.close();
+});

@@ -50,6 +50,7 @@ $blueworx_deck_builder_options = array(
 	'blueworx_deck_builder_settings',
 	'blueworx_deck_builder_version',
 	'blueworx_deck_builder_roles_version',
+	'blueworx_deck_builder_seed_version',
 );
 
 foreach ( $blueworx_deck_builder_options as $blueworx_deck_builder_option ) {

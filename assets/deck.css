@@ -136,6 +136,9 @@
 
 .bwd-note { font-size: 19px; color: var(--bwd-faint); margin-top: auto; }
 .bwd-slide--light .bwd-note { color: var(--bwd-muted); }
+/* The estimate caveat sits under whatever note a slide already carries, so it
+   does not take the margin that pushes that note to the foot of the slide. */
+.bwd-note--estimate { font-size: 17px; font-style: italic; margin-top: 10px; }
 
 /* --- Decoration ----------------------------------------------------------- */
 
@@ -199,6 +202,15 @@
 .bwd-point { display: flex; gap: 26px; padding: 26px 0; border-top: 1px solid rgba(255, 255, 255, .16); }
 .bwd-point__n { font-size: 20px; color: var(--bwd-accent-soft); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .bwd-point__text { font-size: 26px; line-height: 1.35; }
+
+/* --- Hosting fee ---------------------------------------------------------- */
+
+/* The price is the point of this slide, so it is set like a headline rather
+   than like the hours pill beside it on a service slide. */
+.bwd-fee { display: flex; align-items: baseline; gap: 16px; align-self: flex-start; }
+.bwd-fee__n { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.bwd-fee__label { font-size: 22px; color: var(--bwd-faint); }
+.bwd-fee__hours { font-size: 20px; color: var(--bwd-faint); }
 
 /* --- Estimate ------------------------------------------------------------- */
 
@@ -441,6 +453,9 @@
   .bwd-point__text { font-size: 17px; }
   .bwd-hours__n { font-size: 28px; }
   .bwd-hours__label { font-size: 15px; }
+  .bwd-fee__n { font-size: 40px; }
+  .bwd-fee__label { font-size: 15px; }
+  .bwd-fee__hours { font-size: 14px; }
   .bwd-strap { font-size: 20px; }
 
   .bwd-phase__name, .bwd-phase__n { font-size: 18px; }
