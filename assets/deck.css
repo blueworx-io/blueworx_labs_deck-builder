@@ -191,8 +191,6 @@
 /* --- Two-column ----------------------------------------------------------- */
 
 .bwd-two { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: center; height: 100%; }
-.bwd-two--study { grid-template-columns: 0.9fr 1.1fr; }
-.bwd-two--solo { grid-template-columns: minmax(0, 1100px); }
 .bwd-two__left { display: flex; flex-direction: column; gap: 24px; }
 .bwd-two__right { display: flex; flex-direction: column; gap: 0; }
 
@@ -288,22 +286,6 @@
 .bwd-step { border-top: 2px solid var(--bwd-accent); padding-top: 22px; }
 .bwd-step__n { font-size: 44px; font-weight: 700; color: var(--bwd-accent-soft); font-variant-numeric: tabular-nums; }
 .bwd-step__title { font-size: 30px; font-weight: 600; margin-top: 10px; }
-
-/* --- Case study ----------------------------------------------------------- */
-
-.bwd-studyn { font-size: 120px; font-weight: 700; color: rgba(255, 255, 255, .12); line-height: 1; }
-.bwd-sector { font-size: 24px; color: var(--bwd-accent-soft); }
-.bwd-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-.bwd-chip { font-size: 18px; border: 1px solid rgba(255, 255, 255, .26); border-radius: 999px; padding: 8px 18px; }
-.bwd-link__a { font-size: 22px; color: var(--bwd-accent-soft); text-decoration: none; }
-.bwd-link__a:hover { text-decoration: underline; }
-
-.bwd-shots { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
-.bwd-shot { border-radius: 16px; }
-.bwd-shot--desktop { max-height: 520px; width: 100%; object-fit: cover; }
-.bwd-shots__small { display: flex; flex-direction: column; gap: 20px; }
-.bwd-shot--tablet { width: 220px; height: 290px; object-fit: cover; }
-.bwd-shot--mobile { width: 150px; height: 210px; object-fit: cover; }
 
 /* --- Call to action ------------------------------------------------------- */
 
@@ -451,7 +433,6 @@
 
   .bwd-pillars,
   .bwd-two,
-  .bwd-two--study,
   .bwd-phases,
   .bwd-packages,
   .bwd-cards,
@@ -488,12 +469,6 @@
   .bwd-card__text { font-size: 15px; }
   .bwd-step__n { font-size: 28px; }
   .bwd-step__title { font-size: 19px; }
-
-  .bwd-studyn { font-size: 56px; }
-  .bwd-sector { font-size: 16px; }
-  .bwd-chip { font-size: 14px; }
-  .bwd-shots { grid-template-columns: 1fr; }
-  .bwd-shots__small { flex-direction: row; }
 
   .bwd-foot { position: static; font-size: 13px; margin-top: 20px; }
   .bwd-foot--right { display: none; }

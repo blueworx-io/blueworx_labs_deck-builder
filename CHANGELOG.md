@@ -6,6 +6,15 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-04
+
+### Removed
+
+- The Case studies screen has gone, along with its editor and the records
+  behind it. Nothing showed them once the per-project pages went, so it was a
+  menu item that did nothing. Case studies already saved stay in the database
+  and are removed if the plugin is ever deleted.
+
 ## [0.8.0] - 2026-09-04
 
 ### Removed

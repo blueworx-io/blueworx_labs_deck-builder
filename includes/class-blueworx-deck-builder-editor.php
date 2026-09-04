@@ -8,16 +8,15 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Four record editors, all built by the shared page editor library: the deck
- * itself, a support package, a case study and a content library entry. None of
- * this file draws any markup — it says what each record holds, and the library
- * owns the shape.
+ * Three record editors, all built by the shared page editor library: the deck
+ * itself, a support package and a content library entry. None of this file
+ * draws any markup — it says what each record holds, and the library owns the
+ * shape.
  */
 final class Blueworx_Deck_Builder_Editor {
 
 	const DECK_SCREEN     = 'blueworx-deck-editor';
 	const PACKAGE_SCREEN  = 'blueworx-deck-package-editor';
-	const STUDY_SCREEN    = 'blueworx-deck-case-study-editor';
 	const LIBRARY_SCREEN  = 'blueworx-deck-library-editor';
 	const SETTINGS_SCREEN = 'blueworx-labs-deck-builder-settings';
 
@@ -39,11 +38,11 @@ final class Blueworx_Deck_Builder_Editor {
 	/**
 	 * What every record here leaves off the library's Publish and settings tab.
 	 *
-	 * None of these records is a page of the site. A deck, a package, a case
-	 * study and a library entry have no excerpt to summarise them, no comments
-	 * to allow, no categories to be found by and nothing to sit underneath. The
-	 * address matters — a deck's is the client link — but it is something to
-	 * copy, never something to retype: changing it breaks a link already sent,
+	 * None of these records is a page of the site. A deck, a package and a
+	 * library entry have no excerpt to summarise them, no comments to allow,
+	 * no categories to be found by and nothing to sit underneath. The address
+	 * matters — a deck's is the client link — but it is something to copy,
+	 * never something to retype: changing it breaks a link already sent,
 	 * and the deck's own link is minted when the deck is made.
 	 *
 	 * Status, publish date and author stay. Those are what publishing a record
@@ -83,7 +82,6 @@ final class Blueworx_Deck_Builder_Editor {
 		}
 		\Blueworx\PageEditor\v1\Editor::register( self::deck() );
 		\Blueworx\PageEditor\v1\Editor::register( self::package() );
-		\Blueworx\PageEditor\v1\Editor::register( self::case_study() );
 		\Blueworx\PageEditor\v1\Editor::register( self::library_item() );
 		\Blueworx\PageEditor\v1\Editor::register( self::settings() );
 	}
@@ -905,57 +903,6 @@ final class Blueworx_Deck_Builder_Editor {
 	}
 
 	/**
-	 * A case study.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private static function case_study() {
-		return [
-			'slug'       => self::STUDY_SCREEN,
-			'title'      => __( 'Edit case study', 'blueworx-labs-deck-builder' ),
-			'parent'     => Blueworx_Deck_Builder_Admin::PAGE_SLUG,
-			'eyebrow'    => 'Deck Builder · Case studies',
-			'lede'       => __( 'Past work, ready to drop into any deck.', 'blueworx-labs-deck-builder' ),
-			'post_type'  => Blueworx_Deck_Builder_Types::CASE_STUDY,
-			'capability' => Blueworx_Deck_Builder_Admin::CAPABILITY,
-			'publishing' => self::PUBLISHING,
-			'tabs'       => [
-				[
-					'id'     => 'study',
-					'label'  => __( 'Case study', 'blueworx-labs-deck-builder' ),
-					'panels' => [
-						[
-							'id'      => 'about',
-							'eyebrow' => 'Case study · The project',
-							'title'   => __( 'The project', 'blueworx-labs-deck-builder' ),
-							'note'    => __( 'What this was, and who it was for.', 'blueworx-labs-deck-builder' ),
-							'fields'  => [
-								[ 'id' => 'post_title', 'kind' => 'title', 'label' => __( 'Project name', 'blueworx-labs-deck-builder' ), 'required' => true ],
-								[ 'id' => 'number', 'kind' => 'text', 'label' => __( 'Project number', 'blueworx-labs-deck-builder' ), 'max_length' => 4 ],
-								[ 'id' => 'sector', 'kind' => 'text', 'label' => __( 'Industry', 'blueworx-labs-deck-builder' ) ],
-								[ 'id' => 'services', 'kind' => 'text', 'label' => __( 'Services', 'blueworx-labs-deck-builder' ), 'help' => __( 'Separate each one with a comma.', 'blueworx-labs-deck-builder' ) ],
-								[ 'id' => 'summary', 'kind' => 'textarea', 'label' => __( 'Summary', 'blueworx-labs-deck-builder' ), 'wide' => true ],
-								[ 'id' => 'link', 'kind' => 'text', 'label' => __( 'Website', 'blueworx-labs-deck-builder' ), 'format' => 'url' ],
-							],
-						],
-						[
-							'id'      => 'imagery',
-							'eyebrow' => 'Case study · Imagery',
-							'title'   => __( 'Screens', 'blueworx-labs-deck-builder' ),
-							'note'    => __( 'Three shots of the same site, shown together on the slide.', 'blueworx-labs-deck-builder' ),
-							'fields'  => [
-								[ 'id' => 'desktop', 'kind' => 'media', 'label' => __( 'Desktop', 'blueworx-labs-deck-builder' ) ],
-								[ 'id' => 'tablet', 'kind' => 'media', 'label' => __( 'Tablet', 'blueworx-labs-deck-builder' ) ],
-								[ 'id' => 'mobile', 'kind' => 'media', 'label' => __( 'Mobile', 'blueworx-labs-deck-builder' ) ],
-							],
-						],
-					],
-				],
-			],
-		];
-	}
-
-	/**
 	 * A content library entry.
 	 *
 	 * @return array<string,mixed>
@@ -1048,5 +995,4 @@ final class Blueworx_Deck_Builder_Editor {
 			],
 		];
 	}
-
 }

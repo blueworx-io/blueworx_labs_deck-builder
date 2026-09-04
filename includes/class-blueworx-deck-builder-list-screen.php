@@ -1,6 +1,6 @@
 <?php
 /**
- * The three list screens: support packages, case studies and the content library.
+ * The two list screens: support packages and the content library.
  *
  * @package Blueworx\DeckBuilder
  */
@@ -8,9 +8,10 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * One list shape, three lists. Each one exists because the page editor library
+ * One list shape, two lists. Each one exists because the page editor library
  * edits records and never creates them, so something has to show what exists,
- * make a new one, and link into the editor with a record id.
+ * make a new one, and link into the editor with a record id. The library is
+ * the exception that proves it: a fixed list, so it does neither.
  */
 final class Blueworx_Deck_Builder_List_Screen {
 
@@ -52,46 +53,6 @@ final class Blueworx_Deck_Builder_List_Screen {
 					'title' => __( 'Every package carries four prices', 'blueworx-labs-deck-builder' ),
 					'body'  => __( 'Rand, Dollar, Pound and Euro. Each deck picks which one the client sees, so a package is set up once and reused everywhere.', 'blueworx-labs-deck-builder' ),
 				],
-			]
-		);
-	}
-
-	/**
-	 * Case studies.
-	 *
-	 * @return void
-	 */
-	public static function case_studies() {
-		$rows = [];
-		foreach ( self::records( Blueworx_Deck_Builder_Types::CASE_STUDY ) as $post ) {
-			$rows[] = [
-				'id'    => $post->ID,
-				'name'  => $post->post_title,
-				'note'  => (string) get_post_meta( $post->ID, 'bw_case_study_summary', true ),
-				'type'  => (string) get_post_meta( $post->ID, 'bw_case_study_sector', true ),
-				// Nothing to count. A deck no longer carries a page per past
-				// project, so no deck points at one of these — saying "2
-				// decks" here would be pointing at decks that do not show it.
-				'used'  => '',
-				'badge' => null,
-			];
-		}
-
-		self::screen(
-			[
-				'eyebrow'  => __( 'Deck Builder', 'blueworx-labs-deck-builder' ),
-				'title'    => __( 'Case studies', 'blueworx-labs-deck-builder' ),
-				'lede'     => __( 'Past work, ready to drop into any deck.', 'blueworx-labs-deck-builder' ),
-				'add'      => __( 'Add case study', 'blueworx-labs-deck-builder' ),
-				'action'   => 'new_case_study',
-				'back'     => Blueworx_Deck_Builder_Admin::PAGE_SLUG . '-case-studies',
-				'screen'   => Blueworx_Deck_Builder_Editor::STUDY_SCREEN,
-				'empty'    => __( 'No case studies yet', 'blueworx-labs-deck-builder' ),
-				'emptyMsg' => __( 'Add the work you want clients to see, then choose which of it each deck shows.', 'blueworx-labs-deck-builder' ),
-				'icon'     => 'image',
-				'column'   => __( 'Sector', 'blueworx-labs-deck-builder' ),
-				'rows'     => $rows,
-				'notice'   => null,
 			]
 		);
 	}
@@ -287,24 +248,6 @@ final class Blueworx_Deck_Builder_List_Screen {
 			</section>
 		<?php
 		Blueworx_Deck_Builder_Admin::close();
-	}
-
-	/**
-	 * Every record of one type, by title.
-	 *
-	 * @param string $post_type Post type.
-	 * @return array<int,WP_Post>
-	 */
-	private static function records( $post_type ) {
-		return get_posts(
-			[
-				'post_type'   => $post_type,
-				'post_status' => [ 'draft', 'publish', 'private', 'pending' ],
-				'numberposts' => 100,
-				'orderby'     => 'title',
-				'order'       => 'ASC',
-			]
-		);
 	}
 
 	/**

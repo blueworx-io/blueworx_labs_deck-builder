@@ -744,7 +744,7 @@ final class Blueworx_Deck_Builder_Render {
 	}
 
 	/**
-	 * The lead-in to the case studies.
+	 * The past projects slide.
 	 *
 	 * @param array<string,mixed> $section Section.
 	 * @param array<string,mixed> $payload Client payload.

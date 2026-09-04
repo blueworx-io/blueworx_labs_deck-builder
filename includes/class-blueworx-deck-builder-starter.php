@@ -123,21 +123,18 @@ final class Blueworx_Deck_Builder_Starter {
 	}
 
 	/**
-	 * Bring this site's packages, case studies and library up to date.
+	 * Bring this site's packages and library up to date.
 	 *
-	 * Packages and case studies are seeded once and never again: those are a
-	 * site's own commercial terms and its own past work, and a plugin update
-	 * has no business rewriting either. The library is different — it is this
-	 * plugin's content, and keeping it current is the point.
+	 * Packages are seeded once and never again: those are a site's own
+	 * commercial terms, and a plugin update has no business rewriting them.
+	 * The library is different — it is this plugin's content, and keeping it
+	 * current is the point.
 	 *
 	 * @return void
 	 */
 	public static function seed() {
 		if ( ! get_posts( [ 'post_type' => Blueworx_Deck_Builder_Types::PACKAGE, 'post_status' => 'any', 'numberposts' => 1, 'fields' => 'ids' ] ) ) {
 			self::seed_packages();
-		}
-		if ( ! get_posts( [ 'post_type' => Blueworx_Deck_Builder_Types::CASE_STUDY, 'post_status' => 'any', 'numberposts' => 1, 'fields' => 'ids' ] ) ) {
-			self::seed_case_studies();
 		}
 		self::seed_library();
 		update_option( self::VERSION_OPTION, self::SEED_VERSION );
@@ -179,36 +176,6 @@ final class Blueworx_Deck_Builder_Starter {
 			foreach ( $codes as $index => $code ) {
 				update_post_meta( $id, 'bw_deck_package_price_' . strtolower( $code ), $package[5][ $index ] );
 			}
-		}
-	}
-
-	/**
-	 * Three case studies.
-	 *
-	 * @return void
-	 */
-	private static function seed_case_studies() {
-		$studies = [
-			[ '01', 'Hiraste', 'Travel and accommodation', 'Design, development, hosting, ongoing support', 'A platform built to simplify the search for large group accommodation, with curated listings and the search to find the right one quickly.' ],
-			[ '02', 'PadlX', 'Sports and community', 'Design, development, hosting, ongoing support', 'The digital home of a social padel club in Australia: online booking, alongside the community and the brand around it.' ],
-			[ '03', 'CAN SAKHARA', 'Luxury villa', 'Design, development, hosting, ongoing support', 'A luxury digital experience for an exclusive Ibiza villa, where immersive photography and editorial layouts do the selling.' ],
-		];
-
-		foreach ( $studies as $study ) {
-			$id = wp_insert_post(
-				[
-					'post_type'   => Blueworx_Deck_Builder_Types::CASE_STUDY,
-					'post_status' => 'publish',
-					'post_title'  => $study[1],
-				]
-			);
-			if ( is_wp_error( $id ) || ! $id ) {
-				continue;
-			}
-			update_post_meta( $id, 'bw_case_study_number', $study[0] );
-			update_post_meta( $id, 'bw_case_study_sector', $study[2] );
-			update_post_meta( $id, 'bw_case_study_services', $study[3] );
-			update_post_meta( $id, 'bw_case_study_summary', $study[4] );
 		}
 	}
 

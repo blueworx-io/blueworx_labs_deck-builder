@@ -121,7 +121,6 @@ class Blueworx_Deck_Builder_Admin {
 
 		$pages = [
 			[ self::PAGE_SLUG . '-library', __( 'Content library', 'blueworx-labs-deck-builder' ), [ $this, 'render_library' ] ],
-			[ self::PAGE_SLUG . '-case-studies', __( 'Case studies', 'blueworx-labs-deck-builder' ), [ $this, 'render_case_studies' ] ],
 			[ self::PAGE_SLUG . '-packages', __( 'Support packages', 'blueworx-labs-deck-builder' ), [ $this, 'render_packages' ] ],
 		];
 
@@ -169,7 +168,6 @@ class Blueworx_Deck_Builder_Admin {
 			[
 				Blueworx_Deck_Builder_Editor::DECK_SCREEN,
 				Blueworx_Deck_Builder_Editor::PACKAGE_SCREEN,
-				Blueworx_Deck_Builder_Editor::STUDY_SCREEN,
 				Blueworx_Deck_Builder_Editor::LIBRARY_SCREEN,
 			] as $slug
 		) {
@@ -275,16 +273,6 @@ class Blueworx_Deck_Builder_Admin {
 	public function render_packages() {
 		$this->guard();
 		Blueworx_Deck_Builder_List_Screen::packages();
-	}
-
-	/**
-	 * Case studies.
-	 *
-	 * @return void
-	 */
-	public function render_case_studies() {
-		$this->guard();
-		Blueworx_Deck_Builder_List_Screen::case_studies();
 	}
 
 	/**
