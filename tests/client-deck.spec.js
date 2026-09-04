@@ -209,17 +209,17 @@ test('every slide carrying a number says the number is an estimate', async ({ pa
   const guestPage = await guest.newPage();
   await guestPage.goto(link);
 
-  // The estimate, the timeline, the work after launch and the package: four
-  // slides quoting hours or money, and the caveat has to be on each of them
-  // rather than once at the back of the deck.
-  await expect(guestPage.locator('.bwd-note--estimate')).toHaveCount(5);
+  // The estimate, both halves of the timeline, the work after launch, hosting
+  // and the package: every slide quoting hours or money carries the caveat,
+  // rather than it being said once at the back of the deck.
+  await expect(guestPage.locator('.bwd-note--estimate')).toHaveCount(6);
   await expect(guestPage.locator('.bwd-slide--estimate .bwd-note--estimate'))
     .toContainText(/estimates and are subject to change/i);
 
   await guest.close();
 });
 
-test('the client timeline is split at launch', async ({ page, browser }) => {
+test('the client timeline is split at launch, one slide each side', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Coledale Trust', title: 'Charity site' });
   await publish(page, 'Coledale Trust');
   const link = await linkFor(page, id);
@@ -230,11 +230,27 @@ test('the client timeline is split at launch', async ({ page, browser }) => {
 
   // A project has an end and a retainer does not. Drawn as one unbroken run of
   // bars they read as the same commitment, which is the wrong thing for a
-  // proposal to say — so the two stretches carry their own headings.
-  const bands = guestPage.locator('.bwd-slide--timeline .bwd-tl__band');
-  await expect(bands).toHaveCount(2);
-  await expect(bands.nth(0)).toHaveText('Development phase');
-  await expect(bands.nth(1)).toHaveText('Post-launch');
+  // proposal to say — and sixteen rows on one slide were too small to read
+  // anyway. So they are a slide each.
+  const before = guestPage.locator('.bwd-slide--timeline');
+  const after = guestPage.locator('.bwd-slide--timeline-post');
+  await expect(before).toHaveCount(1);
+  await expect(after).toHaveCount(1);
+
+  // Each slide carries only its own stretch. A post-launch bar on the build
+  // slide is what a shared chart used to do.
+  await expect(before.locator('.bwd-tl__bar--post')).toHaveCount(0);
+  await expect(before.locator('.bwd-tl__bar--launch')).toHaveCount(1);
+  await expect(after.locator('.bwd-tl__bar--pre, .bwd-tl__bar--launch')).toHaveCount(0);
+  await expect(after.locator('.bwd-tl__bar--post')).not.toHaveCount(0);
+
+  // And each counts its own weeks from week one, so the shorter stretch is not
+  // drawn as a stub of the longer one.
+  await expect(before.locator('.bwd-tl__row').first()).toContainText('Week 1');
+  await expect(after.locator('.bwd-tl__row').first()).toContainText('Week 1');
+
+  // The legend says only what that slide shows.
+  await expect(after.locator('.bwd-legend')).not.toContainText('Before launch');
 
   await guest.close();
 });

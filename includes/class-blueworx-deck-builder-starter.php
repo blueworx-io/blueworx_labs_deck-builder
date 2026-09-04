@@ -27,7 +27,7 @@ final class Blueworx_Deck_Builder_Starter {
 	/**
 	 * Which edition of the library content this file holds.
 	 */
-	const SEED_VERSION = 4;
+	const SEED_VERSION = 5;
 
 	/**
 	 * Where that number is remembered.
@@ -266,7 +266,7 @@ final class Blueworx_Deck_Builder_Starter {
 				'title'   => 'Project timeline',
 				'kind'    => 'timeline',
 				'eyebrow' => 'Schedule',
-				'note'    => 'Worked out from the estimated hours on both estimates.',
+				'note'    => 'The build up to launch, worked out from the project estimate.',
 			],
 			[
 				'key'     => 'postlaunch',
@@ -275,6 +275,16 @@ final class Blueworx_Deck_Builder_Starter {
 				'eyebrow' => 'Ongoing',
 				'note'    => 'Built from the post-launch estimate.',
 				'body'    => 'The work that carries on once the site is live, and what it is expected to take.',
+			],
+			// The schedule used to be one slide carrying both stretches:
+			// sixteen rows, too small to read, and a single chart that made a
+			// retainer look like the tail of the build. A slide each.
+			[
+				'key'     => 'timeline-postlaunch',
+				'title'   => 'After launch timeline',
+				'kind'    => 'timeline-post',
+				'eyebrow' => 'Schedule',
+				'note'    => 'The same schedule for the work after launch, worked out from the post-launch estimate.',
 			],
 			[
 				'key'     => 'package',

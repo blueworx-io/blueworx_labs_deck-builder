@@ -164,7 +164,9 @@ final class Blueworx_Deck_Builder_Render {
 			case 'postlaunch':
 				return (bool) $payload['postlaunch'];
 			case 'timeline':
-				return (bool) $payload['timeline'];
+				return (bool) self::timeline_rows( $payload, 'pre' );
+			case 'timeline-post':
+				return (bool) self::timeline_rows( $payload, 'post' );
 			case 'package':
 				return null !== $payload['package'];
 			default:
@@ -233,7 +235,10 @@ final class Blueworx_Deck_Builder_Render {
 						self::package( $section, $payload );
 						break;
 					case 'timeline':
-						self::timeline( $section, $payload );
+						self::timeline( $section, $payload, 'pre' );
+						break;
+					case 'timeline-post':
+						self::timeline( $section, $payload, 'post' );
 						break;
 					case 'postlaunch':
 						self::postlaunch( $section, $payload );
@@ -558,46 +563,56 @@ final class Blueworx_Deck_Builder_Render {
 	}
 
 	/**
-	 * The timeline.
+	 * The phases of one stretch of the timeline.
+	 *
+	 * Everything up to and including launch is a piece of work with an end;
+	 * everything after runs for as long as the client keeps us. They were one
+	 * chart once, sixteen rows deep and unreadable on a screen — and one
+	 * unbroken chart read as the same commitment throughout. They are a slide
+	 * each now.
+	 *
+	 * @param array<string,mixed> $payload Client payload.
+	 * @param string              $which   Either pre or post.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function timeline_rows( array $payload, $which ) {
+		$out = [];
+		foreach ( $payload['timeline'] as $phase ) {
+			if ( ( 'post' === $phase['kind'] ? 'post' : 'pre' ) === $which ) {
+				$out[] = $phase;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * One stretch of the timeline.
 	 *
 	 * @param array<string,mixed> $section Section.
 	 * @param array<string,mixed> $payload Client payload.
+	 * @param string              $which   Either pre or post.
 	 * @return void
 	 */
-	private static function timeline( array $section, array $payload ) {
-		// A scale per stretch, not one for the slide. Each counts its own weeks
-		// from week one, so a single scale would draw the shorter of the two as
-		// a stub of a plan it has nothing to do with.
-		$scale = [ 'pre' => 1, 'post' => 1 ];
-		foreach ( $payload['timeline'] as $phase ) {
-			$in           = 'post' === $phase['kind'] ? 'post' : 'pre';
-			$scale[ $in ] = max( $scale[ $in ], $phase['end'] );
+	private static function timeline( array $section, array $payload, $which = 'pre' ) {
+		$rows = self::timeline_rows( $payload, $which );
+
+		// A scale per stretch, not one shared between them. Each counts its own
+		// weeks from week one, so a shared scale would draw the shorter of the
+		// two as a stub of a plan it has nothing to do with.
+		$max = 1;
+		foreach ( $rows as $phase ) {
+			$max = max( $max, $phase['end'] );
 		}
+
+		$fallback = 'post' === $which
+			? __( 'After launch timeline', 'blueworx-labs-deck-builder' )
+			: __( 'Project timeline', 'blueworx-labs-deck-builder' );
 		?>
 		<?php self::eyebrow( $section ); ?>
-		<h2 class="bwd-h2"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : __( 'Project timeline', 'blueworx-labs-deck-builder' ) ); ?></h2>
+		<h2 class="bwd-h2"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : $fallback ); ?></h2>
 		<div class="bwd-tl">
-			<?php $band = ''; ?>
-			<?php foreach ( $payload['timeline'] as $phase ) : ?>
+			<?php foreach ( $rows as $phase ) : ?>
 				<?php
-				// The two stretches get a heading between them. Everything up
-				// to and including launch is a piece of work with an end;
-				// everything after runs for as long as the client keeps us,
-				// and one unbroken chart reads as the same commitment.
-				$in = 'post' === $phase['kind'] ? 'post' : 'pre';
-				if ( $in !== $band ) {
-					$band = $in;
-					printf(
-						'<p class="bwd-tl__band">%s</p>',
-						esc_html(
-							'post' === $in
-								? __( 'Post-launch', 'blueworx-labs-deck-builder' )
-								: __( 'Development phase', 'blueworx-labs-deck-builder' )
-						)
-					);
-				}
-
-				$max   = $scale[ $in ];
 				$left  = ( ( $phase['start'] - 1 ) / $max ) * 100;
 				$width = max( 3.5, ( ( $phase['end'] - $phase['start'] + 1 ) / $max ) * 100 );
 				$text  = '' !== $phase['milestone'] ? $phase['milestone'] : $phase['desc'];
@@ -645,17 +660,28 @@ final class Blueworx_Deck_Builder_Render {
 			<?php endforeach; ?>
 		</div>
 		<div class="bwd-legend">
-			<span class="bwd-key bwd-key--pre"></span><?php esc_html_e( 'Before launch', 'blueworx-labs-deck-builder' ); ?>
-			<span class="bwd-key bwd-key--launch"></span><?php esc_html_e( 'Launch', 'blueworx-labs-deck-builder' ); ?>
-			<span class="bwd-key bwd-key--post"></span><?php esc_html_e( 'After launch', 'blueworx-labs-deck-builder' ); ?>
+			<?php if ( 'post' === $which ) : ?>
+				<span class="bwd-key bwd-key--post"></span><?php esc_html_e( 'After launch', 'blueworx-labs-deck-builder' ); ?>
+			<?php else : ?>
+				<span class="bwd-key bwd-key--pre"></span><?php esc_html_e( 'Before launch', 'blueworx-labs-deck-builder' ); ?>
+				<span class="bwd-key bwd-key--launch"></span><?php esc_html_e( 'Launch', 'blueworx-labs-deck-builder' ); ?>
+			<?php endif; ?>
 		</div>
 		<p class="bwd-note">
 			<?php
-			printf(
-				/* translators: %d: hours of work assumed per working day. */
-				esc_html__( 'Worked out from the estimated hours, at %d hours of work a day. Weeks are indicative and confirmed at kick-off.', 'blueworx-labs-deck-builder' ),
-				(int) Blueworx_Deck_Builder_Types::HOURS_PER_DAY
-			);
+			if ( 'post' === $which ) {
+				printf(
+					/* translators: %d: hours of work assumed per working day. */
+					esc_html__( 'The first weeks of the retainer, counted from launch at %d hours of work a day. This work carries on for as long as we look after the site.', 'blueworx-labs-deck-builder' ),
+					(int) Blueworx_Deck_Builder_Types::HOURS_PER_DAY
+				);
+			} else {
+				printf(
+					/* translators: %d: hours of work assumed per working day. */
+					esc_html__( 'Worked out from the estimated hours, at %d hours of work a day. Weeks are indicative and confirmed at kick-off.', 'blueworx-labs-deck-builder' ),
+					(int) Blueworx_Deck_Builder_Types::HOURS_PER_DAY
+				);
+			}
 			?>
 		</p>
 		<?php

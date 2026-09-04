@@ -165,6 +165,7 @@ final class Blueworx_Deck_Builder_Types {
 			[ 'value' => 'package', 'label' => 'Recommended support package' ],
 			[ 'value' => 'timeline', 'label' => 'Project timeline' ],
 			[ 'value' => 'postlaunch', 'label' => 'Post-launch work' ],
+			[ 'value' => 'timeline-post', 'label' => 'Timeline after launch' ],
 			[ 'value' => 'hosting', 'label' => 'Hosting and management' ],
 			[ 'value' => 'process', 'label' => 'Our process' ],
 			[ 'value' => 'projects', 'label' => 'Past projects' ],

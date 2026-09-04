@@ -6,6 +6,15 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-04
+
+### Changed
+
+- The project timeline is two slides now, not one. The build up to launch is
+  one slide and the work after launch is another, so sixteen rows are no longer
+  squeezed onto a screen nobody can read. Each is a content library entry with
+  its own heading, and each counts its weeks from its own week one.
+
 ## [0.9.0] - 2026-09-04
 
 ### Removed
