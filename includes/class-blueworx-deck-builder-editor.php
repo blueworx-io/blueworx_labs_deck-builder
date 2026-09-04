@@ -270,15 +270,6 @@ final class Blueworx_Deck_Builder_Editor {
 						[ 'id' => 'logo', 'kind' => 'media', 'label' => __( 'Client logo', 'blueworx-labs-deck-builder' ), 'help' => __( 'PNG or SVG, at least 320px wide.', 'blueworx-labs-deck-builder' ) ],
 					],
 				],
-				[
-					'id'      => 'studies',
-					'eyebrow' => 'Past projects · Case studies',
-					'title'   => __( 'Past projects shown to this client', 'blueworx-labs-deck-builder' ),
-					'note'    => __( 'Pick the work closest to this client\'s sector. Order follows the section list.', 'blueworx-labs-deck-builder' ),
-					'fields'  => [
-						[ 'id' => 'case_studies', 'kind' => 'checkboxes', 'label' => __( 'Case studies', 'blueworx-labs-deck-builder' ), 'options' => self::record_options( Blueworx_Deck_Builder_Types::CASE_STUDY ), 'wide' => true ],
-					],
-				],
 			],
 		];
 	}
@@ -1058,26 +1049,4 @@ final class Blueworx_Deck_Builder_Editor {
 		];
 	}
 
-	/**
-	 * Records of one post type as checkbox options.
-	 *
-	 * @param string $post_type Post type.
-	 * @return array<int,array<string,string>>
-	 */
-	private static function record_options( $post_type ) {
-		$posts = get_posts(
-			[
-				'post_type'   => $post_type,
-				'post_status' => [ 'draft', 'publish', 'private', 'pending' ],
-				'numberposts' => 100,
-				'orderby'     => 'title',
-				'order'       => 'ASC',
-			]
-		);
-		$out   = [];
-		foreach ( $posts as $post ) {
-			$out[] = [ 'value' => (string) $post->ID, 'label' => $post->post_title ];
-		}
-		return $out;
-	}
 }

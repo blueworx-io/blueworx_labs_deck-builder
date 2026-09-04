@@ -169,8 +169,7 @@ final class Blueworx_Deck_Builder_Types {
 			[ 'value' => 'postlaunch', 'label' => 'Post-launch work' ],
 			[ 'value' => 'hosting', 'label' => 'Hosting and management' ],
 			[ 'value' => 'process', 'label' => 'Our process' ],
-			[ 'value' => 'projects', 'label' => 'Past projects intro' ],
-			[ 'value' => 'casestudy', 'label' => 'Case study' ],
+			[ 'value' => 'projects', 'label' => 'Past projects' ],
 			[ 'value' => 'cta', 'label' => 'Call to action' ],
 		];
 	}

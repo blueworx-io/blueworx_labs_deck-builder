@@ -95,20 +95,39 @@ test('a deck cannot move a line item to a different phase', async ({ page }) => 
   await expect(page.locator('.bw-repeater__row').first().locator('input[type=number]')).toBeEnabled();
 });
 
-test('the content library can be edited and deleted, but not added to', async ({ page }) => {
+test('the content library is a fixed list: edit only, no adding and no deleting', async ({ page }) => {
   await page.goto(LIBRARY);
 
   await expect(page.locator('.bw-pagehead__h1')).toHaveText('Content library');
   await expect(page.getByRole('button', { name: 'Add entry' })).toHaveCount(0);
 
+  // Editing what an entry says is the only thing this screen offers. The
+  // library is what the business sells, and a deck leaves a section out by
+  // turning it off on that deck — not by deleting it for every future deck.
+  await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
+
   const row = page.locator('.bw-table tbody tr').first();
   await expect(row.getByRole('link', { name: 'Edit' })).toBeVisible();
-  await expect(row.getByRole('button', { name: 'Delete' })).toBeVisible();
 
   // Sections come first, then each estimate — the order a deck presents them,
   // rather than an alphabetical pile.
   await expect(row).toContainText('Cover');
   await expect(row).toContainText('Section');
+});
+
+test('the library holds each section once, and none of the retired ones', async ({ page }) => {
+  await page.goto(LIBRARY);
+  const names = (await libraryRows(page)).map((row) => row.name);
+
+  // The first edition of the library named a section after its slide type.
+  // Those were rewritten under readable names, but four were never matched
+  // back — so the library carried both, and the same section read twice.
+  for (const gone of ['Standard introduction', 'Service detail', 'Past projects intro', 'Call to action', 'Case studies', 'Content migration']) {
+    expect(names).not.toContain(gone);
+  }
+
+  const duplicated = names.filter((name, index) => names.indexOf(name) !== index);
+  expect(duplicated).toEqual([]);
 });
 
 // A section's name is the value of a text input, not text on the page, so

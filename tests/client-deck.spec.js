@@ -261,11 +261,35 @@ test('the deck ends on a call to action the client can read', async ({ page, bro
   expect(paint.color).not.toBe(paint.background);
   expect(paint.color).toBe('rgb(10, 12, 41)');
 
-  // The case study link is the deck's other anchor, and it makes the same bet.
-  const study = guestPage.locator('.bwd-link__a').first();
-  if (await study.count()) {
-    await expect(study).toHaveCSS('color', 'rgb(165, 167, 255)');
-  }
+  await guest.close();
+});
+
+test('a deck shows one past projects slide, not a page per project', async ({ page, browser }) => {
+  const id = await createDeck(page, { client: 'Selby Timber', title: 'Trade site' });
+  await publish(page, 'Selby Timber');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // The lead-in stays and reads as a slide of its own.
+  await expect(guestPage.locator('.bwd-slide--projects')).toHaveCount(1);
+
+  // The per-project pages are gone, and a deck made while they existed still
+  // holds its copy of that section — so the check is that nothing renders it,
+  // not merely that the library stopped handing it out.
+  await expect(guestPage.locator('.bwd-slide--casestudy')).toHaveCount(0);
+  await expect(guestPage.locator('.bwd-two--study, .bwd-shot, .bwd-studyn')).toHaveCount(0);
 
   await guest.close();
+});
+
+test('a deck no longer asks which past projects to show', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Ainsley Roofing', title: 'Company site' });
+  await openEditor(page, id, 'Overview');
+
+  await expect(page.locator('.bw-panels .bw-card__title')).toHaveCount(1);
+  await expect(page.locator('.bw-panels')).toContainText('Deck details');
+  await expect(page.locator('.bw-panels')).not.toContainText('Past projects shown to this client');
 });

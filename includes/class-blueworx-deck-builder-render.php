@@ -124,9 +124,13 @@ final class Blueworx_Deck_Builder_Render {
 
 	/**
 	 * Turn the deck's section list into the slides that actually get shown: a
-	 * case study row becomes one slide per case study the deck has chosen, and
-	 * a generated section that has nothing to show is dropped rather than
+	 * generated section that has nothing to show is dropped rather than
 	 * rendered empty.
+	 *
+	 * A deck used to carry a page per past project, expanded from one section.
+	 * It does not any more — 'Past projects' is a single slide — so a deck made
+	 * while that section existed still holds its copy, and that copy is dropped
+	 * here rather than rendered.
 	 *
 	 * @param array<string,mixed> $payload Client payload.
 	 * @return array<int,array<string,mixed>>
@@ -135,9 +139,6 @@ final class Blueworx_Deck_Builder_Render {
 		$out = [];
 		foreach ( $payload['sections'] as $section ) {
 			if ( 'casestudy' === $section['kind'] ) {
-				foreach ( $payload['case_studies'] as $study ) {
-					$out[] = array_merge( $section, [ 'study' => $study ] );
-				}
 				continue;
 			}
 			if ( ! self::has_content( $section, $payload ) ) {
@@ -192,9 +193,6 @@ final class Blueworx_Deck_Builder_Render {
 	 * @return string
 	 */
 	private static function section_name( array $section, $number ) {
-		if ( isset( $section['study'] ) ) {
-			return $section['study']['name'];
-		}
 		return '' !== $section['title'] ? $section['title'] : sprintf(
 			/* translators: %d: section number. */
 			__( 'Section %d', 'blueworx-labs-deck-builder' ),
@@ -212,7 +210,7 @@ final class Blueworx_Deck_Builder_Render {
 	 * @return void
 	 */
 	private static function section( array $section, array $payload, $number, $total ) {
-		$dark  = in_array( $section['kind'], [ 'cover', 'service', 'package', 'hosting', 'process', 'casestudy', 'cta' ], true );
+		$dark  = in_array( $section['kind'], [ 'cover', 'service', 'package', 'hosting', 'process', 'cta' ], true );
 		$class = 'bwd-slide bwd-slide--' . ( $dark ? 'dark' : 'light' ) . ' bwd-slide--' . $section['kind'];
 		?>
 		<section class="<?php echo esc_attr( $class ); ?>" data-bwd-slide aria-label="<?php echo esc_attr( self::section_name( $section, $number ) ); ?>">
@@ -248,9 +246,6 @@ final class Blueworx_Deck_Builder_Render {
 						break;
 					case 'projects':
 						self::projects( $section, $payload );
-						break;
-					case 'casestudy':
-						self::case_study( $section );
 						break;
 					default:
 						self::cta( $section, $payload );
@@ -769,52 +764,6 @@ final class Blueworx_Deck_Builder_Render {
 	}
 
 	/**
-	 * One case study.
-	 *
-	 * @param array<string,mixed> $section Section, carrying its study.
-	 * @return void
-	 */
-	private static function case_study( array $section ) {
-		$study = $section['study'];
-		// With no screenshots there is nothing to put in the right-hand
-		// column, and a half-empty slide reads as a slide that failed to load.
-		$shots = $study['desktop'] || $study['tablet'] || $study['mobile'];
-		?>
-		<div class="bwd-two <?php echo $shots ? 'bwd-two--study' : 'bwd-two--solo'; ?>">
-			<div class="bwd-two__left">
-				<?php if ( '' !== $study['number'] ) : ?>
-					<p class="bwd-studyn"><?php echo esc_html( $study['number'] ); ?></p>
-				<?php endif; ?>
-				<h2 class="bwd-h1"><?php echo esc_html( $study['name'] ); ?></h2>
-				<?php if ( '' !== $study['sector'] ) : ?>
-					<p class="bwd-sector"><?php echo esc_html( $study['sector'] ); ?></p>
-				<?php endif; ?>
-				<?php if ( '' !== $study['services'] ) : ?>
-					<p class="bwd-chips">
-						<?php foreach ( array_map( 'trim', explode( ',', $study['services'] ) ) as $service ) : ?>
-							<span class="bwd-chip"><?php echo esc_html( $service ); ?></span>
-						<?php endforeach; ?>
-					</p>
-				<?php endif; ?>
-				<?php if ( '' !== $study['summary'] ) : ?>
-					<p class="bwd-lede"><?php echo esc_html( $study['summary'] ); ?></p>
-				<?php endif; ?>
-				<?php if ( '' !== $study['link'] ) : ?>
-					<p class="bwd-link"><a class="bwd-link__a" href="<?php echo esc_url( $study['link'] ); ?>" target="_blank" rel="noopener">&#8599; <?php echo esc_html( wp_parse_url( $study['link'], PHP_URL_HOST ) ); ?></a></p>
-				<?php endif; ?>
-			</div>
-			<div class="bwd-two__right bwd-shots">
-				<?php self::image( $study['desktop'], 'bwd-shot bwd-shot--desktop' ); ?>
-				<div class="bwd-shots__small">
-					<?php self::image( $study['tablet'], 'bwd-shot bwd-shot--tablet' ); ?>
-					<?php self::image( $study['mobile'], 'bwd-shot bwd-shot--mobile' ); ?>
-				</div>
-			</div>
-		</div>
-		<?php
-	}
-
-	/**
 	 * The last slide.
 	 *
 	 * @param array<string,mixed> $section Section.
@@ -866,24 +815,6 @@ final class Blueworx_Deck_Builder_Render {
 		?>
 		<span class="bwd-logo"><img class="bwd-logo__img" src="<?php echo esc_url( $src ); ?>" alt="<?php echo esc_attr( $payload['client'] ); ?>" /></span>
 		<?php
-	}
-
-	/**
-	 * One image from the media library, or nothing at all.
-	 *
-	 * @param int    $id    Attachment id.
-	 * @param string $css   Class to put on it.
-	 * @return void
-	 */
-	private static function image( $id, $css ) {
-		if ( ! $id ) {
-			return;
-		}
-		$src = wp_get_attachment_image_url( (int) $id, 'large' );
-		if ( ! $src ) {
-			return;
-		}
-		printf( '<img class="%s" src="%s" alt="" />', esc_attr( $css ), esc_url( $src ) );
 	}
 
 	/**

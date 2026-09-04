@@ -27,7 +27,7 @@ final class Blueworx_Deck_Builder_Starter {
 	/**
 	 * Which edition of the library content this file holds.
 	 */
-	const SEED_VERSION = 3;
+	const SEED_VERSION = 4;
 
 	/**
 	 * Where that number is remembered.
@@ -66,6 +66,19 @@ final class Blueworx_Deck_Builder_Starter {
 		// offer described from either side. They are one page now, under the
 		// 'hosting' key, so the second one goes.
 		'Hosting and management',
+		// The first edition of the library named a section after its slide
+		// type rather than after what the slide says. Every one of those was
+		// rewritten under a readable name, but these were never matched back
+		// to their replacement — so the library carried both, and the same
+		// section appeared in it twice.
+		'Service detail',
+		'Past projects intro',
+		'Call to action',
+		'Standard introduction',
+		'Content migration',
+		// A deck no longer shows a page per past project. The lead-in stays,
+		// as 'Past projects'.
+		'Case studies',
 	];
 
 	/**
@@ -317,15 +330,8 @@ final class Blueworx_Deck_Builder_Starter {
 				'title'   => 'Past projects',
 				'kind'    => 'projects',
 				'eyebrow' => 'Selected work',
-				'note'    => 'The lead-in to the case studies.',
+				'note'    => 'One slide on the work we have done. There is no page per project.',
 				'body'    => 'Working closely with the businesses we support, we have delivered tailored digital work across a range of industries and organisation sizes.',
-			],
-			[
-				'key'     => 'casestudy',
-				'title'   => 'Case studies',
-				'kind'    => 'casestudy',
-				'eyebrow' => 'Our work',
-				'note'    => 'One slide per case study chosen on the Overview tab.',
 			],
 			[
 				'key'     => 'cta',
@@ -395,7 +401,19 @@ final class Blueworx_Deck_Builder_Starter {
 			self::write_entry( $entry, Blueworx_Deck_Builder_Library::LINE_ITEM, $order, $existing );
 		}
 
-		self::retire( $existing );
+		self::retire( $existing, self::canonical_keys() );
+	}
+
+	/**
+	 * The seed key of every entry this edition writes.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function canonical_keys() {
+		return array_merge(
+			array_column( self::sections(), 'key' ),
+			array_column( self::line_items(), 'key' )
+		);
 	}
 
 	/**
@@ -585,15 +603,28 @@ final class Blueworx_Deck_Builder_Starter {
 	 * to delete, and one that simply is not canonical was probably somebody's
 	 * own.
 	 *
-	 * @param array<string,int> $existing Index from existing_entries().
+	 * A retired name can be a name this edition also uses: a slide is dropped,
+	 * and the slide that replaces it inherits its title. The first edition to
+	 * do the swap is fine, because the old entry and the new one both exist
+	 * and the name finds the old one. Every edition after that finds only the
+	 * new one — and would delete the very section it had just written. So the
+	 * seed key decides: an entry this edition claims is never retired,
+	 * whatever it is called.
+	 *
+	 * @param array<string,int> $existing  Index from existing_entries().
+	 * @param array<int,string> $canonical Seed keys this edition writes.
 	 * @return void
 	 */
-	private static function retire( array $existing ) {
+	private static function retire( array $existing, array $canonical ) {
 		foreach ( self::RETIRED as $title ) {
 			$id = $existing[ 'name:' . strtolower( $title ) ] ?? 0;
-			if ( $id > 0 && self::untouched( $id ) ) {
-				wp_delete_post( $id, true );
+			if ( $id <= 0 || ! self::untouched( $id ) ) {
+				continue;
 			}
+			if ( in_array( (string) get_post_meta( $id, 'bw_library_item_seed_key', true ), $canonical, true ) ) {
+				continue;
+			}
+			wp_delete_post( $id, true );
 		}
 	}
 }

@@ -6,6 +6,28 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-04
+
+### Removed
+
+- The "Standard introduction" section is gone.
+- A deck no longer shows a page per past project. The "Past projects" slide
+  stays; the individual case study pages, and the picker on a deck's Overview
+  tab that chose them, have gone.
+
+### Fixed
+
+- The content library listed the same section twice — "Service detail", "Past
+  projects intro", "Call to action" and "Standard introduction" were older
+  copies of sections that had since been rewritten under readable names. They
+  are removed on update, unless somebody has edited one, in which case it is
+  left alone.
+
+### Changed
+
+- The content library is a fixed list now: entries can be edited, but not added
+  or deleted. To leave a section out of one deck, turn it off on that deck.
+
 ## [0.7.2] - 2026-09-03
 
 ### Fixed
