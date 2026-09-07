@@ -7,7 +7,7 @@
  * Plugin Name:       BlueWorx Labs | Deck Builder
  * Plugin URI:        https://github.com/blueworx-io/blueworx_labs_deck-builder
  * Description:       Build client decks in wp-admin and publish each one to its own private client link.
- * Version:           0.10.0
+ * Version:           0.11.0
  * Requires at least: 6.5
  * Requires PHP:      8.2
  * Author:            BlueWorx
@@ -24,10 +24,20 @@ defined( 'ABSPATH' ) || exit;
  * The single version string. Kept equal to the Version: header above and to
  * package.json — CI fails the build if the three disagree.
  */
-define( 'BLUEWORX_DECK_BUILDER_VERSION', '0.10.0' );
+define( 'BLUEWORX_DECK_BUILDER_VERSION', '0.11.0' );
 define( 'BLUEWORX_DECK_BUILDER_FILE', __FILE__ );
 define( 'BLUEWORX_DECK_BUILDER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BLUEWORX_DECK_BUILDER_URL', plugin_dir_url( __FILE__ ) );
+
+/*
+ * The BlueWorx admin design system: which copy of it actually loads. Required
+ * at plugin load time, top level — not from inside an admin_enqueue_scripts
+ * callback — because registration has to run before any copy's enqueue call,
+ * and a copy that only registers once its own hook fires can lose to a copy
+ * that already enqueued and latched. Several plugins on one site may each
+ * carry a copy; the newest wins and is the only one enqueued.
+ */
+require_once BLUEWORX_DECK_BUILDER_DIR . 'assets/blueworx-admin-design.php';
 
 /*
  * The shared page editor library, which builds every record editor this plugin

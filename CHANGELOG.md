@@ -6,6 +6,16 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-07
+
+### Fixed
+
+- The deck editor is styled by this plugin's own design system again. On a site
+  running another BlueWorx plugin, whichever plugin loaded first decided how
+  every BlueWorx screen looked, so the editor's line items sat squashed on one
+  line instead of one field each. The newest copy of the design system on the
+  site now wins, whatever order plugins load in.
+
 ## [0.10.0] - 2026-09-04
 
 ### Changed
