@@ -6,6 +6,79 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-08
+
+### Changed
+
+- The deck editor picks up the latest shared admin design. The save bar is
+  pinned to the bottom of the window instead of drifting up the page on a short
+  screen, and toggles now sit to the right of the setting they switch, lined up
+  down the edge. A switch that cannot be used says so rather than highlighting
+  when you drag across it.
+
+## [0.11.0] - 2026-09-07
+
+### Fixed
+
+- The deck editor is styled by this plugin's own design system again. On a site
+  running another BlueWorx plugin, whichever plugin loaded first decided how
+  every BlueWorx screen looked, so the editor's line items sat squashed on one
+  line instead of one field each. The newest copy of the design system on the
+  site now wins, whatever order plugins load in.
+
+## [0.10.0] - 2026-09-04
+
+### Changed
+
+- The project timeline is two slides now, not one. The build up to launch is
+  one slide and the work after launch is another, so sixteen rows are no longer
+  squeezed onto a screen nobody can read. Each is a content library entry with
+  its own heading, and each counts its weeks from its own week one.
+
+## [0.9.0] - 2026-09-04
+
+### Removed
+
+- The Case studies screen has gone, along with its editor and the records
+  behind it. Nothing showed them once the per-project pages went, so it was a
+  menu item that did nothing. Case studies already saved stay in the database
+  and are removed if the plugin is ever deleted.
+
+## [0.8.0] - 2026-09-04
+
+### Removed
+
+- The "Standard introduction" section is gone.
+- A deck no longer shows a page per past project. The "Past projects" slide
+  stays; the individual case study pages, and the picker on a deck's Overview
+  tab that chose them, have gone.
+
+### Fixed
+
+- The content library listed the same section twice — "Service detail", "Past
+  projects intro", "Call to action" and "Standard introduction" were older
+  copies of sections that had since been rewritten under readable names. They
+  are removed on update, unless somebody has edited one, in which case it is
+  left alone.
+
+### Changed
+
+- The content library is a fixed list now: entries can be edited, but not added
+  or deleted. To leave a section out of one deck, turn it off on that deck.
+
+## [0.7.2] - 2026-09-03
+
+### Fixed
+
+- The "Get in touch" button on a deck's last page was white text on a white
+  button, so a client could not read the one thing the deck asks them to do. A
+  case study's link was invisible for the same reason.
+- The client's logo on that last page is now big enough to see.
+- A library entry with no order number was sorted in front of the cover, so
+  older entries opened the content library — and every new deck — on the call
+  to action. An entry with no number now sits at the end, where it can be
+  numbered into place.
+
 ## [0.7.1] - 2026-09-03
 
 ### Added

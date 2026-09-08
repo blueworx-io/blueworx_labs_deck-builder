@@ -124,9 +124,13 @@ final class Blueworx_Deck_Builder_Render {
 
 	/**
 	 * Turn the deck's section list into the slides that actually get shown: a
-	 * case study row becomes one slide per case study the deck has chosen, and
-	 * a generated section that has nothing to show is dropped rather than
+	 * generated section that has nothing to show is dropped rather than
 	 * rendered empty.
+	 *
+	 * A deck used to carry a page per past project, expanded from one section.
+	 * It does not any more — 'Past projects' is a single slide — so a deck made
+	 * while that section existed still holds its copy, and that copy is dropped
+	 * here rather than rendered.
 	 *
 	 * @param array<string,mixed> $payload Client payload.
 	 * @return array<int,array<string,mixed>>
@@ -135,9 +139,6 @@ final class Blueworx_Deck_Builder_Render {
 		$out = [];
 		foreach ( $payload['sections'] as $section ) {
 			if ( 'casestudy' === $section['kind'] ) {
-				foreach ( $payload['case_studies'] as $study ) {
-					$out[] = array_merge( $section, [ 'study' => $study ] );
-				}
 				continue;
 			}
 			if ( ! self::has_content( $section, $payload ) ) {
@@ -163,7 +164,9 @@ final class Blueworx_Deck_Builder_Render {
 			case 'postlaunch':
 				return (bool) $payload['postlaunch'];
 			case 'timeline':
-				return (bool) $payload['timeline'];
+				return (bool) self::timeline_rows( $payload, 'pre' );
+			case 'timeline-post':
+				return (bool) self::timeline_rows( $payload, 'post' );
 			case 'package':
 				return null !== $payload['package'];
 			default:
@@ -192,9 +195,6 @@ final class Blueworx_Deck_Builder_Render {
 	 * @return string
 	 */
 	private static function section_name( array $section, $number ) {
-		if ( isset( $section['study'] ) ) {
-			return $section['study']['name'];
-		}
 		return '' !== $section['title'] ? $section['title'] : sprintf(
 			/* translators: %d: section number. */
 			__( 'Section %d', 'blueworx-labs-deck-builder' ),
@@ -212,7 +212,7 @@ final class Blueworx_Deck_Builder_Render {
 	 * @return void
 	 */
 	private static function section( array $section, array $payload, $number, $total ) {
-		$dark  = in_array( $section['kind'], [ 'cover', 'service', 'package', 'hosting', 'process', 'casestudy', 'cta' ], true );
+		$dark  = in_array( $section['kind'], [ 'cover', 'service', 'package', 'hosting', 'process', 'cta' ], true );
 		$class = 'bwd-slide bwd-slide--' . ( $dark ? 'dark' : 'light' ) . ' bwd-slide--' . $section['kind'];
 		?>
 		<section class="<?php echo esc_attr( $class ); ?>" data-bwd-slide aria-label="<?php echo esc_attr( self::section_name( $section, $number ) ); ?>">
@@ -235,7 +235,10 @@ final class Blueworx_Deck_Builder_Render {
 						self::package( $section, $payload );
 						break;
 					case 'timeline':
-						self::timeline( $section, $payload );
+						self::timeline( $section, $payload, 'pre' );
+						break;
+					case 'timeline-post':
+						self::timeline( $section, $payload, 'post' );
 						break;
 					case 'postlaunch':
 						self::postlaunch( $section, $payload );
@@ -248,9 +251,6 @@ final class Blueworx_Deck_Builder_Render {
 						break;
 					case 'projects':
 						self::projects( $section, $payload );
-						break;
-					case 'casestudy':
-						self::case_study( $section );
 						break;
 					default:
 						self::cta( $section, $payload );
@@ -563,46 +563,56 @@ final class Blueworx_Deck_Builder_Render {
 	}
 
 	/**
-	 * The timeline.
+	 * The phases of one stretch of the timeline.
+	 *
+	 * Everything up to and including launch is a piece of work with an end;
+	 * everything after runs for as long as the client keeps us. They were one
+	 * chart once, sixteen rows deep and unreadable on a screen — and one
+	 * unbroken chart read as the same commitment throughout. They are a slide
+	 * each now.
+	 *
+	 * @param array<string,mixed> $payload Client payload.
+	 * @param string              $which   Either pre or post.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function timeline_rows( array $payload, $which ) {
+		$out = [];
+		foreach ( $payload['timeline'] as $phase ) {
+			if ( ( 'post' === $phase['kind'] ? 'post' : 'pre' ) === $which ) {
+				$out[] = $phase;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * One stretch of the timeline.
 	 *
 	 * @param array<string,mixed> $section Section.
 	 * @param array<string,mixed> $payload Client payload.
+	 * @param string              $which   Either pre or post.
 	 * @return void
 	 */
-	private static function timeline( array $section, array $payload ) {
-		// A scale per stretch, not one for the slide. Each counts its own weeks
-		// from week one, so a single scale would draw the shorter of the two as
-		// a stub of a plan it has nothing to do with.
-		$scale = [ 'pre' => 1, 'post' => 1 ];
-		foreach ( $payload['timeline'] as $phase ) {
-			$in           = 'post' === $phase['kind'] ? 'post' : 'pre';
-			$scale[ $in ] = max( $scale[ $in ], $phase['end'] );
+	private static function timeline( array $section, array $payload, $which = 'pre' ) {
+		$rows = self::timeline_rows( $payload, $which );
+
+		// A scale per stretch, not one shared between them. Each counts its own
+		// weeks from week one, so a shared scale would draw the shorter of the
+		// two as a stub of a plan it has nothing to do with.
+		$max = 1;
+		foreach ( $rows as $phase ) {
+			$max = max( $max, $phase['end'] );
 		}
+
+		$fallback = 'post' === $which
+			? __( 'After launch timeline', 'blueworx-labs-deck-builder' )
+			: __( 'Project timeline', 'blueworx-labs-deck-builder' );
 		?>
 		<?php self::eyebrow( $section ); ?>
-		<h2 class="bwd-h2"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : __( 'Project timeline', 'blueworx-labs-deck-builder' ) ); ?></h2>
+		<h2 class="bwd-h2"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : $fallback ); ?></h2>
 		<div class="bwd-tl">
-			<?php $band = ''; ?>
-			<?php foreach ( $payload['timeline'] as $phase ) : ?>
+			<?php foreach ( $rows as $phase ) : ?>
 				<?php
-				// The two stretches get a heading between them. Everything up
-				// to and including launch is a piece of work with an end;
-				// everything after runs for as long as the client keeps us,
-				// and one unbroken chart reads as the same commitment.
-				$in = 'post' === $phase['kind'] ? 'post' : 'pre';
-				if ( $in !== $band ) {
-					$band = $in;
-					printf(
-						'<p class="bwd-tl__band">%s</p>',
-						esc_html(
-							'post' === $in
-								? __( 'Post-launch', 'blueworx-labs-deck-builder' )
-								: __( 'Development phase', 'blueworx-labs-deck-builder' )
-						)
-					);
-				}
-
-				$max   = $scale[ $in ];
 				$left  = ( ( $phase['start'] - 1 ) / $max ) * 100;
 				$width = max( 3.5, ( ( $phase['end'] - $phase['start'] + 1 ) / $max ) * 100 );
 				$text  = '' !== $phase['milestone'] ? $phase['milestone'] : $phase['desc'];
@@ -650,17 +660,28 @@ final class Blueworx_Deck_Builder_Render {
 			<?php endforeach; ?>
 		</div>
 		<div class="bwd-legend">
-			<span class="bwd-key bwd-key--pre"></span><?php esc_html_e( 'Before launch', 'blueworx-labs-deck-builder' ); ?>
-			<span class="bwd-key bwd-key--launch"></span><?php esc_html_e( 'Launch', 'blueworx-labs-deck-builder' ); ?>
-			<span class="bwd-key bwd-key--post"></span><?php esc_html_e( 'After launch', 'blueworx-labs-deck-builder' ); ?>
+			<?php if ( 'post' === $which ) : ?>
+				<span class="bwd-key bwd-key--post"></span><?php esc_html_e( 'After launch', 'blueworx-labs-deck-builder' ); ?>
+			<?php else : ?>
+				<span class="bwd-key bwd-key--pre"></span><?php esc_html_e( 'Before launch', 'blueworx-labs-deck-builder' ); ?>
+				<span class="bwd-key bwd-key--launch"></span><?php esc_html_e( 'Launch', 'blueworx-labs-deck-builder' ); ?>
+			<?php endif; ?>
 		</div>
 		<p class="bwd-note">
 			<?php
-			printf(
-				/* translators: %d: hours of work assumed per working day. */
-				esc_html__( 'Worked out from the estimated hours, at %d hours of work a day. Weeks are indicative and confirmed at kick-off.', 'blueworx-labs-deck-builder' ),
-				(int) Blueworx_Deck_Builder_Types::HOURS_PER_DAY
-			);
+			if ( 'post' === $which ) {
+				printf(
+					/* translators: %d: hours of work assumed per working day. */
+					esc_html__( 'The first weeks of the retainer, counted from launch at %d hours of work a day. This work carries on for as long as we look after the site.', 'blueworx-labs-deck-builder' ),
+					(int) Blueworx_Deck_Builder_Types::HOURS_PER_DAY
+				);
+			} else {
+				printf(
+					/* translators: %d: hours of work assumed per working day. */
+					esc_html__( 'Worked out from the estimated hours, at %d hours of work a day. Weeks are indicative and confirmed at kick-off.', 'blueworx-labs-deck-builder' ),
+					(int) Blueworx_Deck_Builder_Types::HOURS_PER_DAY
+				);
+			}
 			?>
 		</p>
 		<?php
@@ -749,7 +770,7 @@ final class Blueworx_Deck_Builder_Render {
 	}
 
 	/**
-	 * The lead-in to the case studies.
+	 * The past projects slide.
 	 *
 	 * @param array<string,mixed> $section Section.
 	 * @param array<string,mixed> $payload Client payload.
@@ -766,52 +787,6 @@ final class Blueworx_Deck_Builder_Render {
 		</div>
 		<?php
 		unset( $payload );
-	}
-
-	/**
-	 * One case study.
-	 *
-	 * @param array<string,mixed> $section Section, carrying its study.
-	 * @return void
-	 */
-	private static function case_study( array $section ) {
-		$study = $section['study'];
-		// With no screenshots there is nothing to put in the right-hand
-		// column, and a half-empty slide reads as a slide that failed to load.
-		$shots = $study['desktop'] || $study['tablet'] || $study['mobile'];
-		?>
-		<div class="bwd-two <?php echo $shots ? 'bwd-two--study' : 'bwd-two--solo'; ?>">
-			<div class="bwd-two__left">
-				<?php if ( '' !== $study['number'] ) : ?>
-					<p class="bwd-studyn"><?php echo esc_html( $study['number'] ); ?></p>
-				<?php endif; ?>
-				<h2 class="bwd-h1"><?php echo esc_html( $study['name'] ); ?></h2>
-				<?php if ( '' !== $study['sector'] ) : ?>
-					<p class="bwd-sector"><?php echo esc_html( $study['sector'] ); ?></p>
-				<?php endif; ?>
-				<?php if ( '' !== $study['services'] ) : ?>
-					<p class="bwd-chips">
-						<?php foreach ( array_map( 'trim', explode( ',', $study['services'] ) ) as $service ) : ?>
-							<span class="bwd-chip"><?php echo esc_html( $service ); ?></span>
-						<?php endforeach; ?>
-					</p>
-				<?php endif; ?>
-				<?php if ( '' !== $study['summary'] ) : ?>
-					<p class="bwd-lede"><?php echo esc_html( $study['summary'] ); ?></p>
-				<?php endif; ?>
-				<?php if ( '' !== $study['link'] ) : ?>
-					<p class="bwd-link"><a class="bwd-link__a" href="<?php echo esc_url( $study['link'] ); ?>" target="_blank" rel="noopener">&#8599; <?php echo esc_html( wp_parse_url( $study['link'], PHP_URL_HOST ) ); ?></a></p>
-				<?php endif; ?>
-			</div>
-			<div class="bwd-two__right bwd-shots">
-				<?php self::image( $study['desktop'], 'bwd-shot bwd-shot--desktop' ); ?>
-				<div class="bwd-shots__small">
-					<?php self::image( $study['tablet'], 'bwd-shot bwd-shot--tablet' ); ?>
-					<?php self::image( $study['mobile'], 'bwd-shot bwd-shot--mobile' ); ?>
-				</div>
-			</div>
-		</div>
-		<?php
 	}
 
 	/**
@@ -866,24 +841,6 @@ final class Blueworx_Deck_Builder_Render {
 		?>
 		<span class="bwd-logo"><img class="bwd-logo__img" src="<?php echo esc_url( $src ); ?>" alt="<?php echo esc_attr( $payload['client'] ); ?>" /></span>
 		<?php
-	}
-
-	/**
-	 * One image from the media library, or nothing at all.
-	 *
-	 * @param int    $id    Attachment id.
-	 * @param string $css   Class to put on it.
-	 * @return void
-	 */
-	private static function image( $id, $css ) {
-		if ( ! $id ) {
-			return;
-		}
-		$src = wp_get_attachment_image_url( (int) $id, 'large' );
-		if ( ! $src ) {
-			return;
-		}
-		printf( '<img class="%s" src="%s" alt="" />', esc_attr( $css ), esc_url( $src ) );
 	}
 
 	/**

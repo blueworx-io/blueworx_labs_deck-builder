@@ -471,18 +471,17 @@ final class Blueworx_Deck_Builder_Decks_Screen {
 			case 'new_package':
 				return self::new_record( Blueworx_Deck_Builder_Types::PACKAGE, __( 'New package', 'blueworx-labs-deck-builder' ), Blueworx_Deck_Builder_Editor::PACKAGE_SCREEN );
 
-			case 'new_case_study':
-				return self::new_record( Blueworx_Deck_Builder_Types::CASE_STUDY, __( 'New case study', 'blueworx-labs-deck-builder' ), Blueworx_Deck_Builder_Editor::STUDY_SCREEN );
-
-			// There is deliberately no "new library entry". The library is the
-			// single source every deck is copied from, so adding to it is a
-			// change to what the business offers — made in the seed, in code,
-			// and reviewed like anything else.
+			// There is deliberately no "new library entry", and no deleting one
+			// either. The library is the fixed list every deck is copied from,
+			// so what it holds is a change to what the business offers — made
+			// in the seed, in code, and reviewed like anything else. Editing
+			// what an entry says is the only thing this screen offers, and the
+			// list screen shows no Delete on a library row to match.
 
 			case 'delete_record':
 				$post = get_post( $id );
 				$back = isset( $input['back'] ) ? sanitize_key( wp_unslash( $input['back'] ) ) : Blueworx_Deck_Builder_Admin::PAGE_SLUG;
-				if ( null !== $post && in_array( $post->post_type, [ Blueworx_Deck_Builder_Types::PACKAGE, Blueworx_Deck_Builder_Types::CASE_STUDY, Blueworx_Deck_Builder_Types::LIBRARY, Blueworx_Deck_Builder_Types::DECK ], true ) ) {
+				if ( null !== $post && in_array( $post->post_type, [ Blueworx_Deck_Builder_Types::PACKAGE, Blueworx_Deck_Builder_Types::DECK ], true ) ) {
 					wp_delete_post( $id, true );
 				}
 				return add_query_arg( 'done', 'deleted', Blueworx_Deck_Builder_Admin::url( $back ) );

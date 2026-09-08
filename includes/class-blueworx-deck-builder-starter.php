@@ -27,7 +27,7 @@ final class Blueworx_Deck_Builder_Starter {
 	/**
 	 * Which edition of the library content this file holds.
 	 */
-	const SEED_VERSION = 3;
+	const SEED_VERSION = 5;
 
 	/**
 	 * Where that number is remembered.
@@ -66,6 +66,19 @@ final class Blueworx_Deck_Builder_Starter {
 		// offer described from either side. They are one page now, under the
 		// 'hosting' key, so the second one goes.
 		'Hosting and management',
+		// The first edition of the library named a section after its slide
+		// type rather than after what the slide says. Every one of those was
+		// rewritten under a readable name, but these were never matched back
+		// to their replacement — so the library carried both, and the same
+		// section appeared in it twice.
+		'Service detail',
+		'Past projects intro',
+		'Call to action',
+		'Standard introduction',
+		'Content migration',
+		// A deck no longer shows a page per past project. The lead-in stays,
+		// as 'Past projects'.
+		'Case studies',
 	];
 
 	/**
@@ -110,21 +123,18 @@ final class Blueworx_Deck_Builder_Starter {
 	}
 
 	/**
-	 * Bring this site's packages, case studies and library up to date.
+	 * Bring this site's packages and library up to date.
 	 *
-	 * Packages and case studies are seeded once and never again: those are a
-	 * site's own commercial terms and its own past work, and a plugin update
-	 * has no business rewriting either. The library is different — it is this
-	 * plugin's content, and keeping it current is the point.
+	 * Packages are seeded once and never again: those are a site's own
+	 * commercial terms, and a plugin update has no business rewriting them.
+	 * The library is different — it is this plugin's content, and keeping it
+	 * current is the point.
 	 *
 	 * @return void
 	 */
 	public static function seed() {
 		if ( ! get_posts( [ 'post_type' => Blueworx_Deck_Builder_Types::PACKAGE, 'post_status' => 'any', 'numberposts' => 1, 'fields' => 'ids' ] ) ) {
 			self::seed_packages();
-		}
-		if ( ! get_posts( [ 'post_type' => Blueworx_Deck_Builder_Types::CASE_STUDY, 'post_status' => 'any', 'numberposts' => 1, 'fields' => 'ids' ] ) ) {
-			self::seed_case_studies();
 		}
 		self::seed_library();
 		update_option( self::VERSION_OPTION, self::SEED_VERSION );
@@ -166,36 +176,6 @@ final class Blueworx_Deck_Builder_Starter {
 			foreach ( $codes as $index => $code ) {
 				update_post_meta( $id, 'bw_deck_package_price_' . strtolower( $code ), $package[5][ $index ] );
 			}
-		}
-	}
-
-	/**
-	 * Three case studies.
-	 *
-	 * @return void
-	 */
-	private static function seed_case_studies() {
-		$studies = [
-			[ '01', 'Hiraste', 'Travel and accommodation', 'Design, development, hosting, ongoing support', 'A platform built to simplify the search for large group accommodation, with curated listings and the search to find the right one quickly.' ],
-			[ '02', 'PadlX', 'Sports and community', 'Design, development, hosting, ongoing support', 'The digital home of a social padel club in Australia: online booking, alongside the community and the brand around it.' ],
-			[ '03', 'CAN SAKHARA', 'Luxury villa', 'Design, development, hosting, ongoing support', 'A luxury digital experience for an exclusive Ibiza villa, where immersive photography and editorial layouts do the selling.' ],
-		];
-
-		foreach ( $studies as $study ) {
-			$id = wp_insert_post(
-				[
-					'post_type'   => Blueworx_Deck_Builder_Types::CASE_STUDY,
-					'post_status' => 'publish',
-					'post_title'  => $study[1],
-				]
-			);
-			if ( is_wp_error( $id ) || ! $id ) {
-				continue;
-			}
-			update_post_meta( $id, 'bw_case_study_number', $study[0] );
-			update_post_meta( $id, 'bw_case_study_sector', $study[2] );
-			update_post_meta( $id, 'bw_case_study_services', $study[3] );
-			update_post_meta( $id, 'bw_case_study_summary', $study[4] );
 		}
 	}
 
@@ -286,7 +266,7 @@ final class Blueworx_Deck_Builder_Starter {
 				'title'   => 'Project timeline',
 				'kind'    => 'timeline',
 				'eyebrow' => 'Schedule',
-				'note'    => 'Worked out from the estimated hours on both estimates.',
+				'note'    => 'The build up to launch, worked out from the project estimate.',
 			],
 			[
 				'key'     => 'postlaunch',
@@ -295,6 +275,16 @@ final class Blueworx_Deck_Builder_Starter {
 				'eyebrow' => 'Ongoing',
 				'note'    => 'Built from the post-launch estimate.',
 				'body'    => 'The work that carries on once the site is live, and what it is expected to take.',
+			],
+			// The schedule used to be one slide carrying both stretches:
+			// sixteen rows, too small to read, and a single chart that made a
+			// retainer look like the tail of the build. A slide each.
+			[
+				'key'     => 'timeline-postlaunch',
+				'title'   => 'After launch timeline',
+				'kind'    => 'timeline-post',
+				'eyebrow' => 'Schedule',
+				'note'    => 'The same schedule for the work after launch, worked out from the post-launch estimate.',
 			],
 			[
 				'key'     => 'package',
@@ -317,15 +307,8 @@ final class Blueworx_Deck_Builder_Starter {
 				'title'   => 'Past projects',
 				'kind'    => 'projects',
 				'eyebrow' => 'Selected work',
-				'note'    => 'The lead-in to the case studies.',
+				'note'    => 'One slide on the work we have done. There is no page per project.',
 				'body'    => 'Working closely with the businesses we support, we have delivered tailored digital work across a range of industries and organisation sizes.',
-			],
-			[
-				'key'     => 'casestudy',
-				'title'   => 'Case studies',
-				'kind'    => 'casestudy',
-				'eyebrow' => 'Our work',
-				'note'    => 'One slide per case study chosen on the Overview tab.',
 			],
 			[
 				'key'     => 'cta',
@@ -395,7 +378,19 @@ final class Blueworx_Deck_Builder_Starter {
 			self::write_entry( $entry, Blueworx_Deck_Builder_Library::LINE_ITEM, $order, $existing );
 		}
 
-		self::retire( $existing );
+		self::retire( $existing, self::canonical_keys() );
+	}
+
+	/**
+	 * The seed key of every entry this edition writes.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function canonical_keys() {
+		return array_merge(
+			array_column( self::sections(), 'key' ),
+			array_column( self::line_items(), 'key' )
+		);
 	}
 
 	/**
@@ -585,15 +580,28 @@ final class Blueworx_Deck_Builder_Starter {
 	 * to delete, and one that simply is not canonical was probably somebody's
 	 * own.
 	 *
-	 * @param array<string,int> $existing Index from existing_entries().
+	 * A retired name can be a name this edition also uses: a slide is dropped,
+	 * and the slide that replaces it inherits its title. The first edition to
+	 * do the swap is fine, because the old entry and the new one both exist
+	 * and the name finds the old one. Every edition after that finds only the
+	 * new one — and would delete the very section it had just written. So the
+	 * seed key decides: an entry this edition claims is never retired,
+	 * whatever it is called.
+	 *
+	 * @param array<string,int> $existing  Index from existing_entries().
+	 * @param array<int,string> $canonical Seed keys this edition writes.
 	 * @return void
 	 */
-	private static function retire( array $existing ) {
+	private static function retire( array $existing, array $canonical ) {
 		foreach ( self::RETIRED as $title ) {
 			$id = $existing[ 'name:' . strtolower( $title ) ] ?? 0;
-			if ( $id > 0 && self::untouched( $id ) ) {
-				wp_delete_post( $id, true );
+			if ( $id <= 0 || ! self::untouched( $id ) ) {
+				continue;
 			}
+			if ( in_array( (string) get_post_meta( $id, 'bw_library_item_seed_key', true ), $canonical, true ) ) {
+				continue;
+			}
+			wp_delete_post( $id, true );
 		}
 	}
 }

@@ -233,7 +233,7 @@ test('the record editors are reachable but are not in the menu', async ({ page }
   await openEditor(page, id);
   await expect(page.locator('.bw-pagehead__h1')).toHaveText('Advisory site');
 
-  // Not in the menu: the design's menu is six items, and "Edit deck" is not
+  // Not in the menu: the design's menu is five items, and "Edit deck" is not
   // one of them — an editor opened with no record has nothing to edit.
   await expect(page.locator('#adminmenu a[href*="page=blueworx-deck-editor"]')).toHaveCount(0);
   await expect(page.locator('#adminmenu a[href$="page=blueworx-labs-deck-builder-settings"]')).toHaveCount(1);

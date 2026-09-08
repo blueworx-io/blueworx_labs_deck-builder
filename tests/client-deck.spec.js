@@ -209,17 +209,17 @@ test('every slide carrying a number says the number is an estimate', async ({ pa
   const guestPage = await guest.newPage();
   await guestPage.goto(link);
 
-  // The estimate, the timeline, the work after launch and the package: four
-  // slides quoting hours or money, and the caveat has to be on each of them
-  // rather than once at the back of the deck.
-  await expect(guestPage.locator('.bwd-note--estimate')).toHaveCount(5);
+  // The estimate, both halves of the timeline, the work after launch, hosting
+  // and the package: every slide quoting hours or money carries the caveat,
+  // rather than it being said once at the back of the deck.
+  await expect(guestPage.locator('.bwd-note--estimate')).toHaveCount(6);
   await expect(guestPage.locator('.bwd-slide--estimate .bwd-note--estimate'))
     .toContainText(/estimates and are subject to change/i);
 
   await guest.close();
 });
 
-test('the client timeline is split at launch', async ({ page, browser }) => {
+test('the client timeline is split at launch, one slide each side', async ({ page, browser }) => {
   const id = await createDeck(page, { client: 'Coledale Trust', title: 'Charity site' });
   await publish(page, 'Coledale Trust');
   const link = await linkFor(page, id);
@@ -230,11 +230,82 @@ test('the client timeline is split at launch', async ({ page, browser }) => {
 
   // A project has an end and a retainer does not. Drawn as one unbroken run of
   // bars they read as the same commitment, which is the wrong thing for a
-  // proposal to say — so the two stretches carry their own headings.
-  const bands = guestPage.locator('.bwd-slide--timeline .bwd-tl__band');
-  await expect(bands).toHaveCount(2);
-  await expect(bands.nth(0)).toHaveText('Development phase');
-  await expect(bands.nth(1)).toHaveText('Post-launch');
+  // proposal to say — and sixteen rows on one slide were too small to read
+  // anyway. So they are a slide each.
+  const before = guestPage.locator('.bwd-slide--timeline');
+  const after = guestPage.locator('.bwd-slide--timeline-post');
+  await expect(before).toHaveCount(1);
+  await expect(after).toHaveCount(1);
+
+  // Each slide carries only its own stretch. A post-launch bar on the build
+  // slide is what a shared chart used to do.
+  await expect(before.locator('.bwd-tl__bar--post')).toHaveCount(0);
+  await expect(before.locator('.bwd-tl__bar--launch')).toHaveCount(1);
+  await expect(after.locator('.bwd-tl__bar--pre, .bwd-tl__bar--launch')).toHaveCount(0);
+  await expect(after.locator('.bwd-tl__bar--post')).not.toHaveCount(0);
+
+  // And each counts its own weeks from week one, so the shorter stretch is not
+  // drawn as a stub of the longer one.
+  await expect(before.locator('.bwd-tl__row').first()).toContainText('Week 1');
+  await expect(after.locator('.bwd-tl__row').first()).toContainText('Week 1');
+
+  // The legend says only what that slide shows.
+  await expect(after.locator('.bwd-legend')).not.toContainText('Before launch');
 
   await guest.close();
+});
+
+test('the deck ends on a call to action the client can read', async ({ page, browser }) => {
+  const id = await createDeck(page, { client: 'Marlow Joinery', title: 'Workshop site' });
+  await publish(page, 'Marlow Joinery');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // The last slide is dark and its button is a white pill, so the label has to
+  // carry the deck's ink. The base "a { color: inherit }" reset outweighed the
+  // button's own colour once, which painted the label white on white — a
+  // button nobody could read, on the one slide asking the client to act.
+  const button = guestPage.locator('.bwd-btn');
+  await expect(button).toHaveText('Get in touch');
+  const paint = await button.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { color: style.color, background: style.backgroundColor };
+  });
+  expect(paint.color).not.toBe(paint.background);
+  expect(paint.color).toBe('rgb(10, 12, 41)');
+
+  await guest.close();
+});
+
+test('a deck shows one past projects slide, not a page per project', async ({ page, browser }) => {
+  const id = await createDeck(page, { client: 'Selby Timber', title: 'Trade site' });
+  await publish(page, 'Selby Timber');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // The lead-in stays and reads as a slide of its own.
+  await expect(guestPage.locator('.bwd-slide--projects')).toHaveCount(1);
+
+  // The per-project pages are gone, and a deck made while they existed still
+  // holds its copy of that section — so the check is that nothing renders it,
+  // not merely that the library stopped handing it out.
+  await expect(guestPage.locator('.bwd-slide--casestudy')).toHaveCount(0);
+  await expect(guestPage.locator('.bwd-two--study, .bwd-shot, .bwd-studyn')).toHaveCount(0);
+
+  await guest.close();
+});
+
+test('a deck no longer asks which past projects to show', async ({ page }) => {
+  const id = await createDeck(page, { client: 'Ainsley Roofing', title: 'Company site' });
+  await openEditor(page, id, 'Overview');
+
+  await expect(page.locator('.bw-panels .bw-card__title')).toHaveCount(1);
+  await expect(page.locator('.bw-panels')).toContainText('Deck details');
+  await expect(page.locator('.bw-panels')).not.toContainText('Past projects shown to this client');
 });

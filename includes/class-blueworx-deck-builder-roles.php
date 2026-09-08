@@ -39,10 +39,9 @@ final class Blueworx_Deck_Builder_Roles {
 	 * What the sales agent role can do, and the whole of it.
 	 *
 	 * `read` is what lets them into wp-admin at all. `upload_files` is what
-	 * lets the media picker open, which a deck needs for a client logo and a
-	 * case study's screenshots. Everything else about the site — posts, pages,
-	 * comments, users, settings, plugins — is not on this list and so is not
-	 * theirs.
+	 * lets the media picker open, which a deck needs for its client logo.
+	 * Everything else about the site — posts, pages, comments, users,
+	 * settings, plugins — is not on this list and so is not theirs.
 	 *
 	 * @var array<int,string>
 	 */

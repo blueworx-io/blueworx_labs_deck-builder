@@ -516,7 +516,7 @@ final class Blueworx_Deck_Builder_Deck {
 	}
 
 	/**
-	 * The seven readiness checks, in the order the design shows them.
+	 * The six readiness checks, in the order the design shows them.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -553,10 +553,6 @@ final class Blueworx_Deck_Builder_Deck {
 			[
 				'label' => __( 'A package can be recommended', 'blueworx-labs-deck-builder' ),
 				'done'  => in_array( $recommendation['state'], [ 'OK', 'EXACT', 'OVERRIDE' ], true ),
-			],
-			[
-				'label' => __( 'Case studies selected', 'blueworx-labs-deck-builder' ),
-				'done'  => (bool) $this->get( 'case_studies', [] ),
 			],
 		];
 	}
@@ -607,7 +603,6 @@ final class Blueworx_Deck_Builder_Deck {
 			],
 			'package'       => $this->client_package( $recommendation ),
 			'hosting'       => $this->client_hosting(),
-			'case_studies'  => $this->client_case_studies(),
 		];
 	}
 
@@ -750,33 +745,6 @@ final class Blueworx_Deck_Builder_Deck {
 	public function alternatives() {
 		$chosen = $this->get( 'alternatives', [] );
 		return is_array( $chosen ) ? array_map( 'intval', $chosen ) : [];
-	}
-
-	/**
-	 * The case studies this deck shows, in the order they were chosen.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function client_case_studies() {
-		$out = [];
-		foreach ( (array) $this->get( 'case_studies', [] ) as $id ) {
-			$study = get_post( (int) $id );
-			if ( null === $study || Blueworx_Deck_Builder_Types::CASE_STUDY !== $study->post_type ) {
-				continue;
-			}
-			$out[] = [
-				'number'   => (string) get_post_meta( $study->ID, 'bw_case_study_number', true ),
-				'name'     => $study->post_title,
-				'sector'   => (string) get_post_meta( $study->ID, 'bw_case_study_sector', true ),
-				'services' => (string) get_post_meta( $study->ID, 'bw_case_study_services', true ),
-				'summary'  => (string) get_post_meta( $study->ID, 'bw_case_study_summary', true ),
-				'link'     => (string) get_post_meta( $study->ID, 'bw_case_study_link', true ),
-				'desktop'  => (int) get_post_meta( $study->ID, 'bw_case_study_desktop', true ),
-				'tablet'   => (int) get_post_meta( $study->ID, 'bw_case_study_tablet', true ),
-				'mobile'   => (int) get_post_meta( $study->ID, 'bw_case_study_mobile', true ),
-			];
-		}
-		return $out;
 	}
 
 	/**

@@ -35,7 +35,7 @@ test('the plugin is active, and its menu entry is in wp-admin', async ({ page })
   ).toBeVisible();
 });
 
-test('the menu carries the six screens the design asks for, in order', async ({ page }) => {
+test('the menu carries the five screens the design asks for, in order', async ({ page }) => {
   await page.goto(DECKS);
 
   const items = await page
@@ -46,8 +46,18 @@ test('the menu carries the six screens the design asks for, in order', async ({ 
     'Decks',
     'Create new deck',
     'Content library',
-    'Case studies',
     'Support packages',
     'Settings',
   ]);
+});
+
+test('the case studies screen and its editor are gone, not merely unlisted', async ({ page }) => {
+  // A deck no longer shows a page per past project, so nothing points at a
+  // case study. The screen used to still be there, listing records nobody
+  // could put in front of a client — a menu item that did nothing.
+  for (const url of [`${DECKS}-case-studies`, '/wp-admin/admin.php?page=blueworx-deck-case-study-editor']) {
+    await page.goto(url);
+    await expect(page.locator('body')).toContainText(/not allowed to access this page|Sorry|cannot be found/i);
+    await expect(page.locator('.bw-pagehead__h1')).toHaveCount(0);
+  }
 });

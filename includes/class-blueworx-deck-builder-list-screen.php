@@ -1,6 +1,6 @@
 <?php
 /**
- * The three list screens: support packages, case studies and the content library.
+ * The two list screens: support packages and the content library.
  *
  * @package Blueworx\DeckBuilder
  */
@@ -8,9 +8,10 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * One list shape, three lists. Each one exists because the page editor library
+ * One list shape, two lists. Each one exists because the page editor library
  * edits records and never creates them, so something has to show what exists,
- * make a new one, and link into the editor with a record id.
+ * make a new one, and link into the editor with a record id. The library is
+ * the exception that proves it: a fixed list, so it does neither.
  */
 final class Blueworx_Deck_Builder_List_Screen {
 
@@ -57,43 +58,6 @@ final class Blueworx_Deck_Builder_List_Screen {
 	}
 
 	/**
-	 * Case studies.
-	 *
-	 * @return void
-	 */
-	public static function case_studies() {
-		$rows = [];
-		foreach ( self::records( Blueworx_Deck_Builder_Types::CASE_STUDY ) as $post ) {
-			$rows[] = [
-				'id'    => $post->ID,
-				'name'  => $post->post_title,
-				'note'  => (string) get_post_meta( $post->ID, 'bw_case_study_summary', true ),
-				'type'  => (string) get_post_meta( $post->ID, 'bw_case_study_sector', true ),
-				'used'  => self::decks_using( $post->ID, 'bw_deck_case_studies' ),
-				'badge' => null,
-			];
-		}
-
-		self::screen(
-			[
-				'eyebrow'  => __( 'Deck Builder', 'blueworx-labs-deck-builder' ),
-				'title'    => __( 'Case studies', 'blueworx-labs-deck-builder' ),
-				'lede'     => __( 'Past work, ready to drop into any deck.', 'blueworx-labs-deck-builder' ),
-				'add'      => __( 'Add case study', 'blueworx-labs-deck-builder' ),
-				'action'   => 'new_case_study',
-				'back'     => Blueworx_Deck_Builder_Admin::PAGE_SLUG . '-case-studies',
-				'screen'   => Blueworx_Deck_Builder_Editor::STUDY_SCREEN,
-				'empty'    => __( 'No case studies yet', 'blueworx-labs-deck-builder' ),
-				'emptyMsg' => __( 'Add the work you want clients to see, then choose which of it each deck shows.', 'blueworx-labs-deck-builder' ),
-				'icon'     => 'image',
-				'column'   => __( 'Sector', 'blueworx-labs-deck-builder' ),
-				'rows'     => $rows,
-				'notice'   => null,
-			]
-		);
-	}
-
-	/**
 	 * The content library.
 	 *
 	 * @return void
@@ -119,11 +83,13 @@ final class Blueworx_Deck_Builder_List_Screen {
 				'eyebrow'  => __( 'Deck Builder', 'blueworx-labs-deck-builder' ),
 				'title'    => __( 'Content library', 'blueworx-labs-deck-builder' ),
 				'lede'     => __( 'Everything a deck is made of, written once. Every new deck starts as a copy of this; decks already made keep theirs.', 'blueworx-labs-deck-builder' ),
-				// No add. The library is what the business offers, not a
-				// per-deck scratchpad, so a new entry is a deliberate change
-				// to the product rather than something typed in passing.
+				// Neither add nor delete. The library is the fixed list of what
+				// the business offers, and it arrives with the plugin — the
+				// only thing to do to an entry is change what it says. An
+				// entry a deck should leave out is turned off on that deck.
 				'add'      => '',
 				'action'   => '',
+				'delete'   => false,
 				'back'     => Blueworx_Deck_Builder_Admin::PAGE_SLUG . '-library',
 				'screen'   => Blueworx_Deck_Builder_Editor::LIBRARY_SCREEN,
 				'empty'    => __( 'The library is empty', 'blueworx-labs-deck-builder' ),
@@ -261,13 +227,15 @@ final class Blueworx_Deck_Builder_List_Screen {
 										<div class="bw-rowactions">
 											<a class="bw-rowactions__link" href="<?php echo esc_url( Blueworx_Deck_Builder_Admin::editor_url( $config['screen'], $row['id'] ) ); ?>"><?php esc_html_e( 'Edit', 'blueworx-labs-deck-builder' ); ?></a>
 											<?php
-											Blueworx_Deck_Builder_Admin::action_button(
-												__( 'Delete', 'blueworx-labs-deck-builder' ),
-												'delete_record',
-												$row['id'],
-												'bw-btn bw-btn--link bw-btn--sm',
-												[ 'back' => $config['back'] ]
-											);
+											if ( false !== ( $config['delete'] ?? true ) ) {
+												Blueworx_Deck_Builder_Admin::action_button(
+													__( 'Delete', 'blueworx-labs-deck-builder' ),
+													'delete_record',
+													$row['id'],
+													'bw-btn bw-btn--link bw-btn--sm',
+													[ 'back' => $config['back'] ]
+												);
+											}
 											?>
 										</div>
 									</td>
@@ -283,38 +251,15 @@ final class Blueworx_Deck_Builder_List_Screen {
 	}
 
 	/**
-	 * Every record of one type, by title.
+	 * How many decks currently point at one package.
 	 *
-	 * @param string $post_type Post type.
-	 * @return array<int,WP_Post>
-	 */
-	private static function records( $post_type ) {
-		return get_posts(
-			[
-				'post_type'   => $post_type,
-				'post_status' => [ 'draft', 'publish', 'private', 'pending' ],
-				'numberposts' => 100,
-				'orderby'     => 'title',
-				'order'       => 'ASC',
-			]
-		);
-	}
-
-	/**
-	 * How many decks currently point at one record.
-	 *
-	 * @param int    $id       Record id.
-	 * @param string $meta_key Deck meta key that holds the reference.
+	 * @param int $id Package id.
 	 * @return string
 	 */
-	private static function decks_using( $id, $meta_key = '' ) {
+	private static function decks_using( $id ) {
 		$count = 0;
 		foreach ( Blueworx_Deck_Builder_Deck::all() as $deck ) {
-			if ( '' === $meta_key ) {
-				$used = (int) $deck->get( 'override', 0 ) === (int) $id || in_array( (int) $id, $deck->alternatives(), true );
-			} else {
-				$used = in_array( (string) $id, array_map( 'strval', (array) $deck->get( 'case_studies', [] ) ), true );
-			}
+			$used   = (int) $deck->get( 'override', 0 ) === (int) $id || in_array( (int) $id, $deck->alternatives(), true );
 			$count += $used ? 1 : 0;
 		}
 		if ( 0 === $count ) {

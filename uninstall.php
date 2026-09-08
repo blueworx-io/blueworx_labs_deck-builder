@@ -10,10 +10,15 @@
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 /*
- * Every deck, package, case study and library entry this plugin created, with
- * its post meta. Nothing else on the site is touched: the media library keeps
- * the logos and screenshots, because those were uploaded by hand and are not
- * this plugin's to delete.
+ * Every deck, package and library entry this plugin created, with its post
+ * meta. Nothing else on the site is touched: the media library keeps the
+ * logos, because those were uploaded by hand and are not this plugin's to
+ * delete.
+ *
+ * `bw_case_study` is on the list even though nothing makes one any more. A
+ * deck used to show a page per past project, and a site that ran that version
+ * still has the records; deleting the plugin has to take them with it or they
+ * are orphaned in the database for good.
  *
  * The post types are not registered during uninstall — WordPress loads this
  * file on its own — so the query names them directly rather than asking

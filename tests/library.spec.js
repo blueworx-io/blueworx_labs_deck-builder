@@ -95,20 +95,39 @@ test('a deck cannot move a line item to a different phase', async ({ page }) => 
   await expect(page.locator('.bw-repeater__row').first().locator('input[type=number]')).toBeEnabled();
 });
 
-test('the content library can be edited and deleted, but not added to', async ({ page }) => {
+test('the content library is a fixed list: edit only, no adding and no deleting', async ({ page }) => {
   await page.goto(LIBRARY);
 
   await expect(page.locator('.bw-pagehead__h1')).toHaveText('Content library');
   await expect(page.getByRole('button', { name: 'Add entry' })).toHaveCount(0);
 
+  // Editing what an entry says is the only thing this screen offers. The
+  // library is what the business sells, and a deck leaves a section out by
+  // turning it off on that deck — not by deleting it for every future deck.
+  await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
+
   const row = page.locator('.bw-table tbody tr').first();
   await expect(row.getByRole('link', { name: 'Edit' })).toBeVisible();
-  await expect(row.getByRole('button', { name: 'Delete' })).toBeVisible();
 
   // Sections come first, then each estimate — the order a deck presents them,
   // rather than an alphabetical pile.
   await expect(row).toContainText('Cover');
   await expect(row).toContainText('Section');
+});
+
+test('the library holds each section once, and none of the retired ones', async ({ page }) => {
+  await page.goto(LIBRARY);
+  const names = (await libraryRows(page)).map((row) => row.name);
+
+  // The first edition of the library named a section after its slide type.
+  // Those were rewritten under readable names, but four were never matched
+  // back — so the library carried both, and the same section read twice.
+  for (const gone of ['Standard introduction', 'Service detail', 'Past projects intro', 'Call to action', 'Case studies', 'Content migration']) {
+    expect(names).not.toContain(gone);
+  }
+
+  const duplicated = names.filter((name, index) => names.indexOf(name) !== index);
+  expect(duplicated).toEqual([]);
 });
 
 // A section's name is the value of a text input, not text on the page, so
@@ -177,4 +196,45 @@ test('the share tab frames the deck itself, at three widths', async ({ page }) =
   await page.reload();
   await page.click('.bw-tab:has-text("Preview and share")');
   await expect(page.locator('.bw-preview--empty')).toBeVisible();
+});
+
+// Every row's name, paired with the type column beside it.
+async function libraryRows(page) {
+  return page.locator('.bw-table tbody tr').evaluateAll((rows) =>
+    rows.map((row) => ({
+      name: row.querySelector('.bw-table__primary').innerText.trim(),
+      type: row.querySelectorAll('td')[1].innerText.trim(),
+    })));
+}
+
+test('an entry nobody numbered sits at the back of the library, not in front of the cover', async ({ page }) => {
+  await page.goto(LIBRARY);
+  const sections = (await libraryRows(page)).filter((row) => 'Section' === row.type);
+  expect(sections[0].name).toBe('Cover');
+
+  // Take the number off a section in the middle of the list. An entry written
+  // before the library kept an order has none either, and on a real site four
+  // of them opened every deck on the call to action.
+  const row = page.locator('.bw-table tbody tr').filter({ hasText: 'What we do' }).first();
+  await row.getByRole('link', { name: 'Edit' }).click();
+  await expect(page.locator('#order')).toBeVisible();
+  const original = await page.locator('#order').inputValue();
+  await page.fill('#order', '');
+  await save(page);
+
+  try {
+    await page.goto(LIBRARY);
+    const after = (await libraryRows(page)).filter((r) => 'Section' === r.type);
+    expect(after[0].name).toBe('Cover');
+    expect(after[after.length - 1].name).toBe('What we do');
+  } finally {
+    // Site-wide state: put the number back, or every later run reads a
+    // library this test rearranged.
+    await page.goto(LIBRARY);
+    await page.locator('.bw-table tbody tr').filter({ hasText: 'What we do' }).first()
+      .getByRole('link', { name: 'Edit' }).click();
+    await expect(page.locator('#order')).toBeVisible();
+    await page.fill('#order', original);
+    await save(page);
+  }
 });

@@ -121,7 +121,6 @@ class Blueworx_Deck_Builder_Admin {
 
 		$pages = [
 			[ self::PAGE_SLUG . '-library', __( 'Content library', 'blueworx-labs-deck-builder' ), [ $this, 'render_library' ] ],
-			[ self::PAGE_SLUG . '-case-studies', __( 'Case studies', 'blueworx-labs-deck-builder' ), [ $this, 'render_case_studies' ] ],
 			[ self::PAGE_SLUG . '-packages', __( 'Support packages', 'blueworx-labs-deck-builder' ), [ $this, 'render_packages' ] ],
 		];
 
@@ -169,7 +168,6 @@ class Blueworx_Deck_Builder_Admin {
 			[
 				Blueworx_Deck_Builder_Editor::DECK_SCREEN,
 				Blueworx_Deck_Builder_Editor::PACKAGE_SCREEN,
-				Blueworx_Deck_Builder_Editor::STUDY_SCREEN,
 				Blueworx_Deck_Builder_Editor::LIBRARY_SCREEN,
 			] as $slug
 		) {
@@ -198,29 +196,17 @@ class Blueworx_Deck_Builder_Admin {
 			return;
 		}
 
-		wp_enqueue_style(
-			'blueworx-admin-design',
-			BLUEWORX_DECK_BUILDER_URL . 'assets/blueworx-admin-design.css',
-			[],
-			BLUEWORX_DECK_BUILDER_VERSION
-		);
+		// Which copy of the design system loads is the system's decision, not
+		// this plugin's: on a site with another BlueWorx plugin, the newest copy
+		// present wins. Enqueueing it here directly is what used to let an older
+		// copy style these screens.
+		blueworx_admin_design_enqueue();
+		blueworx_admin_design_enqueue_icons();
 
 		// The full-bleed chrome overrides the design system documents. They are
 		// the only styling this plugin keeps of its own, and they go inline so
 		// there is never a second admin stylesheet to drift from the first.
 		wp_add_inline_style( 'blueworx-admin-design', $this->chrome_overrides() );
-
-		// Every [data-lucide] element on a PHP-rendered screen stays empty
-		// without this. It is a module, so an older WordPress simply gets no
-		// icons rather than a fatal error.
-		if ( function_exists( 'wp_enqueue_script_module' ) ) {
-			wp_enqueue_script_module(
-				'blueworx-admin-icons',
-				BLUEWORX_DECK_BUILDER_URL . 'assets/blueworx-admin-icons.js',
-				[],
-				BLUEWORX_DECK_BUILDER_VERSION
-			);
-		}
 	}
 
 	/**
@@ -275,16 +261,6 @@ class Blueworx_Deck_Builder_Admin {
 	public function render_packages() {
 		$this->guard();
 		Blueworx_Deck_Builder_List_Screen::packages();
-	}
-
-	/**
-	 * Case studies.
-	 *
-	 * @return void
-	 */
-	public function render_case_studies() {
-		$this->guard();
-		Blueworx_Deck_Builder_List_Screen::case_studies();
 	}
 
 	/**

@@ -11,14 +11,13 @@ defined( 'ABSPATH' ) || exit;
  * Every record is a WordPress post type, so each one gets revisions,
  * capabilities and REST without this plugin reinventing any of them. None of
  * them is public: a deck is reached through its own client link, never through
- * WordPress's own permalinks, and the other three are configuration.
+ * WordPress's own permalinks, and the other two are configuration.
  */
 final class Blueworx_Deck_Builder_Types {
 
-	const DECK       = 'bw_deck';
-	const PACKAGE    = 'bw_deck_package';
-	const CASE_STUDY = 'bw_case_study';
-	const LIBRARY    = 'bw_library_item';
+	const DECK    = 'bw_deck';
+	const PACKAGE = 'bw_deck_package';
+	const LIBRARY = 'bw_library_item';
 
 	/**
 	 * How much of a day actually goes on one client's work, and how many days
@@ -40,7 +39,7 @@ final class Blueworx_Deck_Builder_Types {
 	}
 
 	/**
-	 * Register the four post types.
+	 * Register the three post types.
 	 *
 	 * `show_ui` is false on all of them: this plugin builds its own lists, so
 	 * WordPress's would be a second way in to the same records, styled
@@ -71,7 +70,6 @@ final class Blueworx_Deck_Builder_Types {
 
 		register_post_type( self::DECK, array_merge( $shared, [ 'label' => __( 'Decks', 'blueworx-labs-deck-builder' ) ] ) );
 		register_post_type( self::PACKAGE, array_merge( $shared, [ 'label' => __( 'Support packages', 'blueworx-labs-deck-builder' ) ] ) );
-		register_post_type( self::CASE_STUDY, array_merge( $shared, [ 'label' => __( 'Case studies', 'blueworx-labs-deck-builder' ) ] ) );
 		register_post_type( self::LIBRARY, array_merge( $shared, [ 'label' => __( 'Content library', 'blueworx-labs-deck-builder' ) ] ) );
 	}
 
@@ -167,10 +165,10 @@ final class Blueworx_Deck_Builder_Types {
 			[ 'value' => 'package', 'label' => 'Recommended support package' ],
 			[ 'value' => 'timeline', 'label' => 'Project timeline' ],
 			[ 'value' => 'postlaunch', 'label' => 'Post-launch work' ],
+			[ 'value' => 'timeline-post', 'label' => 'Timeline after launch' ],
 			[ 'value' => 'hosting', 'label' => 'Hosting and management' ],
 			[ 'value' => 'process', 'label' => 'Our process' ],
-			[ 'value' => 'projects', 'label' => 'Past projects intro' ],
-			[ 'value' => 'casestudy', 'label' => 'Case study' ],
+			[ 'value' => 'projects', 'label' => 'Past projects' ],
 			[ 'value' => 'cta', 'label' => 'Call to action' ],
 		];
 	}
