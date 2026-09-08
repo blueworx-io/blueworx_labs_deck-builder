@@ -6,6 +6,16 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-08
+
+### Changed
+
+- The deck editor picks up the latest shared admin design. The save bar is
+  pinned to the bottom of the window instead of drifting up the page on a short
+  screen, and toggles now sit to the right of the setting they switch, lined up
+  down the edge. A switch that cannot be used says so rather than highlighting
+  when you drag across it.
+
 ## [0.11.0] - 2026-09-07
 
 ### Fixed
