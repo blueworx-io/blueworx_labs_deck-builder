@@ -6,6 +6,27 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-09
+
+### Changed
+
+- The client logo is off the cover and off the What we do slide. The client
+  knows whose deck it is; it still signs off the last slide.
+- A service slide's description runs the full width of its column now, level
+  with the heading above it, instead of wrapping a third of the way across.
+- The second estimate figure is labelled 'Post launch' rather than 'Ongoing
+  estimate', matching what the slide it belongs to is called.
+- Every estimate total says 'hours' after the number, rather than leaving the
+  client to guess the unit.
+- The estimate slide shows both figures — what the build costs and what
+  carries on afterwards — where the top right used to repeat the slide's own
+  title. A deck with no post-launch work shows only the one.
+- The support packages table shows each package's included hours in the
+  Allowance column, so they can be read down the page instead of only in the
+  small print under each name.
+- The line under the hosting price saying roughly how many upkeep hours it
+  covers is gone. That figure is ours, not the client's.
+
 ## [0.13.0] - 2026-09-09
 
 ### Changed

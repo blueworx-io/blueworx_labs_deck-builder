@@ -163,7 +163,7 @@
 /* --- Cover ---------------------------------------------------------------- */
 
 .bwd-cover { position: relative; display: flex; flex-direction: column; height: 100%; }
-.bwd-cover__top { display: flex; align-items: flex-start; justify-content: space-between; }
+.bwd-cover__top { display: flex; align-items: flex-start; justify-content: flex-end; }
 .bwd-cover__kind { font-size: 20px; letter-spacing: .16em; text-transform: uppercase; color: var(--bwd-accent-soft); }
 .bwd-cover__mid { margin-top: auto; }
 .bwd-cover__mid .bwd-lede { max-width: 34ch; margin-top: 26px; }
@@ -178,6 +178,8 @@
 .bwd-total { text-align: right; flex: 0 0 auto; }
 .bwd-total__label { font-size: 20px; letter-spacing: .14em; text-transform: uppercase; color: var(--bwd-muted); margin-bottom: 10px; }
 .bwd-total__n { font-size: 64px; font-weight: 700; letter-spacing: -1.4px; font-variant-numeric: tabular-nums; }
+.bwd-total__unit { font-size: 24px; font-weight: 600; letter-spacing: 0; color: var(--bwd-muted); }
+.bwd-totals { display: flex; gap: 56px; flex: 0 0 auto; }
 
 .bwd-mid { margin: auto 0; }
 
@@ -192,6 +194,11 @@
 
 .bwd-two { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: center; height: 100%; }
 .bwd-two__left { display: flex; flex-direction: column; gap: 24px; }
+
+/* The lede sits under the heading in a column of its own, so the column is
+   already the width it should be. Capping it again wrapped it a third of the
+   way across while the heading beside it ran the full width. */
+.bwd-two__left .bwd-lede { max-width: none; }
 .bwd-two__right { display: flex; flex-direction: column; gap: 0; }
 
 .bwd-hours { display: inline-flex; align-items: baseline; gap: 14px; background: rgba(79, 70, 229, .22); border-radius: 999px; padding: 14px 30px; align-self: flex-start; }
@@ -211,7 +218,6 @@
 .bwd-fee { display: flex; align-items: baseline; gap: 16px; align-self: flex-start; }
 .bwd-fee__n { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .bwd-fee__label { font-size: 22px; color: var(--bwd-faint); }
-.bwd-fee__hours { font-size: 20px; color: var(--bwd-faint); }
 
 /* --- Estimate ------------------------------------------------------------- */
 
@@ -426,6 +432,8 @@
   .bwd-total { text-align: left; }
   .bwd-total__label { font-size: 12px; }
   .bwd-total__n { font-size: 40px; }
+  .bwd-total__unit { font-size: 16px; }
+  .bwd-totals { gap: 24px; }
 
   .bwd-pillars,
   .bwd-two,
@@ -443,7 +451,6 @@
   .bwd-hours__label { font-size: 15px; }
   .bwd-fee__n { font-size: 40px; }
   .bwd-fee__label { font-size: 15px; }
-  .bwd-fee__hours { font-size: 14px; }
   .bwd-strap { font-size: 20px; }
 
   .bwd-phase__name, .bwd-phase__n { font-size: 18px; }

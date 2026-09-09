@@ -279,7 +279,6 @@ final class Blueworx_Deck_Builder_Render {
 		<span class="bwd-blob bwd-blob--two"></span>
 		<div class="bwd-cover">
 			<div class="bwd-cover__top">
-				<?php self::logo( $payload ); ?>
 				<p class="bwd-cover__kind"><?php esc_html_e( 'Support proposal', 'blueworx-labs-deck-builder' ); ?></p>
 			</div>
 			<div class="bwd-cover__mid">
@@ -312,11 +311,15 @@ final class Blueworx_Deck_Builder_Render {
 	/**
 	 * What we do: four pillars.
 	 *
+	 * The payload goes unread here — this slide says what we do, not who for —
+	 * but every section renderer takes the same two arguments so the dispatcher
+	 * in section() can call any of them without asking which.
+	 *
 	 * @param array<string,mixed> $section Section.
 	 * @param array<string,mixed> $payload Client payload.
 	 * @return void
 	 */
-	private static function pillars( array $section, array $payload ) {
+	private static function pillars( array $section, array $payload ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		$points = self::lines( $section['points'] );
 		if ( ! $points ) {
 			$points = [
@@ -335,7 +338,6 @@ final class Blueworx_Deck_Builder_Render {
 					<p class="bwd-intro"><?php echo esc_html( $section['body'] ); ?></p>
 				<?php endif; ?>
 			</div>
-			<?php self::logo( $payload ); ?>
 		</div>
 		<div class="bwd-pillars">
 			<?php foreach ( $points as $index => $point ) : ?>
@@ -413,9 +415,23 @@ final class Blueworx_Deck_Builder_Render {
 				<?php self::eyebrow( $section ); ?>
 				<h2 class="bwd-h2"><?php echo esc_html( '' !== $section['title'] ? $section['title'] : __( 'Estimate summary', 'blueworx-labs-deck-builder' ) ); ?></h2>
 			</div>
-			<div class="bwd-total">
-				<p class="bwd-total__label"><?php esc_html_e( 'Total project estimate', 'blueworx-labs-deck-builder' ); ?></p>
-				<p class="bwd-total__n"><?php echo esc_html( Blueworx_Deck_Builder_Packages::hours( $payload['totals']['project'] ) ); ?></p>
+			<?php
+			// Both figures, because the question a client asks at the estimate
+			// is what the build costs and what carries on afterwards. The
+			// ongoing one is left off a deck that has no post-launch work
+			// rather than shown as a nought.
+			?>
+			<div class="bwd-totals">
+				<div class="bwd-total">
+					<p class="bwd-total__label"><?php esc_html_e( 'Project estimate', 'blueworx-labs-deck-builder' ); ?></p>
+					<p class="bwd-total__n"><?php echo esc_html( Blueworx_Deck_Builder_Packages::hours( $payload['totals']['project'] ) ); ?> <span class="bwd-total__unit"><?php esc_html_e( 'hours', 'blueworx-labs-deck-builder' ); ?></span></p>
+				</div>
+				<?php if ( $payload['postlaunch'] ) : ?>
+					<div class="bwd-total">
+						<p class="bwd-total__label"><?php esc_html_e( 'Post launch', 'blueworx-labs-deck-builder' ); ?></p>
+						<p class="bwd-total__n"><?php echo esc_html( Blueworx_Deck_Builder_Packages::hours( $payload['totals']['postlaunch'] ) ); ?> <span class="bwd-total__unit"><?php esc_html_e( 'hours', 'blueworx-labs-deck-builder' ); ?></span></p>
+					</div>
+				<?php endif; ?>
 			</div>
 		</div>
 		<div class="bwd-phases">
@@ -458,17 +474,11 @@ final class Blueworx_Deck_Builder_Render {
 						<p class="bwd-fee__n"><?php echo esc_html( $hosting['price'] ); ?></p>
 						<p class="bwd-fee__label"><?php echo esc_html( $hosting['period'] ); ?></p>
 					</div>
-					<?php if ( $hosting['hours'] > 0 ) : ?>
-						<p class="bwd-fee__hours">
-							<?php
-							printf(
-								/* translators: %s: hours. */
-								esc_html__( 'Around %s hours of managed upkeep a month.', 'blueworx-labs-deck-builder' ),
-								esc_html( Blueworx_Deck_Builder_Packages::hours( $hosting['hours'] ) )
-							);
-							?>
-						</p>
-					<?php endif; ?>
+					<?php
+					// The upkeep hours are not said here. They are an internal
+					// figure that fed the fee, and printing them under the price
+					// invited a client to divide one by the other.
+					?>
 				<?php endif; ?>
 				<?php if ( '' !== $section['strap'] ) : ?>
 					<p class="bwd-strap"><?php echo esc_html( $section['strap'] ); ?></p>
@@ -706,8 +716,8 @@ final class Blueworx_Deck_Builder_Render {
 				<?php endif; ?>
 			</div>
 			<div class="bwd-total">
-				<p class="bwd-total__label"><?php esc_html_e( 'Ongoing estimate', 'blueworx-labs-deck-builder' ); ?></p>
-				<p class="bwd-total__n"><?php echo esc_html( Blueworx_Deck_Builder_Packages::hours( $payload['totals']['postlaunch'] ) ); ?></p>
+				<p class="bwd-total__label"><?php esc_html_e( 'Post launch', 'blueworx-labs-deck-builder' ); ?></p>
+				<p class="bwd-total__n"><?php echo esc_html( Blueworx_Deck_Builder_Packages::hours( $payload['totals']['postlaunch'] ) ); ?> <span class="bwd-total__unit"><?php esc_html_e( 'hours', 'blueworx-labs-deck-builder' ); ?></span></p>
 			</div>
 		</div>
 		<div class="bwd-cards">
