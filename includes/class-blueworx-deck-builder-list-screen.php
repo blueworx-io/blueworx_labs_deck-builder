@@ -27,7 +27,7 @@ final class Blueworx_Deck_Builder_List_Screen {
 				'id'    => $package['id'],
 				'name'  => $package['name'],
 				'note'  => self::package_note( $package ),
-				'type'  => trim( $package['period'] . ' · ' . $package['commitment'], ' ·' ),
+				'type'  => self::package_allowance( $package ),
 				'used'  => self::decks_using( $package['id'] ),
 				'badge' => self::package_badge( $package ),
 			];
@@ -275,27 +275,54 @@ final class Blueworx_Deck_Builder_List_Screen {
 	/**
 	 * The line under a package's name.
 	 *
+	 * The included hours used to be said here as well. They are the number
+	 * people scan this screen for, so they moved up into the Allowance column
+	 * where they can be read down the page — see package_allowance().
+	 *
 	 * @param array<string,mixed> $package Package.
 	 * @return string
 	 */
 	private static function package_note( array $package ) {
-		$parts = [];
-		if ( null !== $package['hours'] ) {
-			$parts[] = sprintf(
-				/* translators: %s: included hours. */
-				__( '%s hours included', 'blueworx-labs-deck-builder' ),
-				Blueworx_Deck_Builder_Packages::hours( $package['hours'] )
-			);
-		}
 		$prices = 0;
 		foreach ( $package['prices'] as $price ) {
 			$prices += null === $price ? 0 : 1;
 		}
-		$parts[] = sprintf(
+		return sprintf(
 			/* translators: %d: how many of the four currencies have a price. */
 			__( '%d of 4 prices set', 'blueworx-labs-deck-builder' ),
 			$prices
 		);
+	}
+
+	/**
+	 * What the Allowance column says: the hours, then the term they run over.
+	 *
+	 * A package with no hours set yet says so rather than showing its term
+	 * alone, because a term on its own reads like a complete answer and this
+	 * one is the reason the package cannot be recommended.
+	 *
+	 * @param array<string,mixed> $package Package.
+	 * @return string
+	 */
+	private static function package_allowance( array $package ) {
+		$term = trim( $package['period'] . ' · ' . $package['commitment'], ' ·' );
+
+		if ( null === $package['hours'] ) {
+			$parts = [ __( 'No hours set', 'blueworx-labs-deck-builder' ) ];
+		} else {
+			$parts = [
+				sprintf(
+					/* translators: %s: included hours. */
+					__( '%s hrs', 'blueworx-labs-deck-builder' ),
+					Blueworx_Deck_Builder_Packages::hours( $package['hours'] )
+				),
+			];
+		}
+
+		if ( '' !== $term ) {
+			$parts[] = $term;
+		}
+
 		return implode( ' · ', $parts );
 	}
 

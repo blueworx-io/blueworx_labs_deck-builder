@@ -197,6 +197,10 @@ test('hosting gets its own page, and the fee lands on it when it is set', async 
   await expect(slide.locator('.bwd-fee__n')).toHaveText('£450');
   await expect(slide).toContainText('per month');
 
+  // The upkeep hours behind the fee are ours, not the client's — printing
+  // them under the price invited dividing one by the other.
+  await expect(slide).not.toContainText('managed upkeep');
+
   await guest.close();
 });
 
@@ -308,4 +312,109 @@ test('a deck no longer asks which past projects to show', async ({ page }) => {
   await expect(page.locator('.bw-panels .bw-card__title')).toHaveCount(1);
   await expect(page.locator('.bw-panels')).toContainText('Deck details');
   await expect(page.locator('.bw-panels')).not.toContainText('Past projects shown to this client');
+});
+
+test('the client logo is off the cover and the What we do slide, and the lede runs the full column', async ({
+  page,
+  browser,
+}) => {
+  const id = await createDeck(page, { client: 'Harlow Joinery', title: 'Members site' });
+  await publish(page, 'Harlow Joinery');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // The client already knows whose deck this is, so the logo comes off the
+  // two slides that only repeated it. Asserting the slot is gone rather than
+  // that no logo rendered: a deck with no logo uploaded would pass the
+  // second check whatever the markup said.
+  await expect(guestPage.locator('.bwd-slide--cover .bwd-cover__top > *')).toHaveCount(1);
+  await expect(guestPage.locator('.bwd-slide--cover .bwd-cover__kind')).toBeVisible();
+  await expect(guestPage.locator('.bwd-slide--what .bwd-head > *')).toHaveCount(1);
+
+  // A service slide's description was capped narrower than the heading above
+  // it, so it wrapped a third of the way across an empty column. Only the
+  // slide on screen has a size to measure, so walk to the first service
+  // slide rather than reading a hidden one.
+  const service = guestPage.locator('.bwd-slide--service.is-current .bwd-two__left');
+  for (let i = 0; i < 20 && (await service.count()) === 0; i++) {
+    await guestPage.keyboard.press('ArrowRight');
+  }
+  await expect(service).toHaveCount(1);
+
+  const heading = await service.locator('.bwd-h2, .bwd-h1').first().boundingBox();
+  const lede = await service.locator('.bwd-lede').first().boundingBox();
+  expect(lede.width).toBeGreaterThan(heading.width * 0.9);
+
+  await guest.close();
+});
+
+test('the estimate slide gives both totals, and every total says hours', async ({
+  page,
+  browser,
+}) => {
+  const id = await createDeck(page, { client: 'Marlow Interiors', title: 'Trade site' });
+  await publish(page, 'Marlow Interiors');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  // A bare number left the client to guess the unit.
+  const totals = guestPage.locator('.bwd-slide--estimate .bwd-total');
+  await expect(totals.first().locator('.bwd-total__unit')).toHaveText('hours');
+
+  // Both figures on the one slide: what the build costs, and what carries on
+  // afterwards. The top right used to repeat the slide's own title instead.
+  await expect(totals).toHaveCount(2);
+  await expect(totals.nth(0)).toContainText('Project estimate');
+  await expect(totals.nth(1)).toContainText('Post launch');
+  await expect(guestPage.locator('.bwd-slide--estimate')).not.toContainText(
+    'Total project estimate'
+  );
+
+  await guest.close();
+});
+
+test('changing the recommendation on a published deck reaches the client', async ({
+  page,
+  browser,
+}) => {
+  const id = await createDeck(page, { client: 'Thornbury Legal', title: 'Firm site' });
+  await publish(page, 'Thornbury Legal');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  const recommended = guestPage.locator('.bwd-pkg--main');
+  const before = await recommended.innerText();
+
+  // Override the recommendation to a different package. The client view was
+  // frozen at publish and never looked at again, so this change used to stop
+  // at the editor: the deck went on showing whatever was picked the day it
+  // was published, with nothing saying so.
+  await openEditor(page, id, 'Support package');
+  const options = await page.locator('#override option').evaluateAll((els) =>
+    els.map((el) => ({ value: el.value, label: el.textContent.trim(), selected: el.selected }))
+  );
+  const current = options.find((o) => o.selected);
+  // A package that is neither "use the automatic recommendation" nor the one
+  // already showing, so the save has something to save and the deck has
+  // something to change to.
+  const other = options.find(
+    (o) => o.value !== '0' && o.value !== current.value && !before.includes(o.label.split(' · ')[0])
+  );
+  await page.selectOption('#override', other.value);
+  await save(page);
+
+  await guestPage.reload();
+  await expect(recommended).toContainText(other.label.split(' · ')[0]);
+  expect(await recommended.innerText()).not.toBe(before);
+
+  await guest.close();
 });

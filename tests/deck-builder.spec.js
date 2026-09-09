@@ -226,6 +226,18 @@ test('the support packages screen lists what a deck can recommend', async ({ pag
   await expect(page.locator('.bw-table')).toContainText('Core Plus');
 });
 
+test('the packages table shows the hours each package includes', async ({ page }) => {
+  await page.goto(PACKAGES);
+
+  // The hours are the number this screen is read for, so they belong in the
+  // Allowance column rather than only in the small print under the name.
+  const allowance = page.locator('.bw-table tbody tr').first().locator('td').nth(1);
+  await expect(allowance).toContainText(/\d+ hrs/);
+
+  // And said once: it used to be in both places.
+  await expect(page.locator('.bw-table tbody')).not.toContainText('hours included');
+});
+
 test('the record editors are reachable but are not in the menu', async ({ page }) => {
   const id = await createDeck(page, { client: 'Ashcombe Partners', title: 'Advisory site' });
 
