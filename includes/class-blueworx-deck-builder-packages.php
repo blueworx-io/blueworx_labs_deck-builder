@@ -256,6 +256,10 @@ final class Blueworx_Deck_Builder_Packages {
 	 */
 	private static function card( array $package, $currency ) {
 		return [
+			// Which package this is, so a snapshot taken at publish can be
+			// told apart from the one the deck now asks for. Nothing shows it
+			// to a client.
+			'id'         => $package['id'],
 			'name'       => $package['name'],
 			'hours'      => $package['hours'],
 			'period'     => $package['period'],

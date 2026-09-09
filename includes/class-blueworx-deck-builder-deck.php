@@ -727,14 +727,51 @@ final class Blueworx_Deck_Builder_Deck {
 	 * @return array<string,mixed>|null
 	 */
 	private function client_package( array $recommendation ) {
-		$snapshot = $this->get( 'snapshot', [] );
-		if ( 'published' === $this->status() && is_array( $snapshot ) && ! empty( $snapshot['name'] ) ) {
-			return $snapshot;
-		}
 		if ( null === $recommendation['package'] ) {
 			return null;
 		}
+
+		$snapshot = $this->get( 'snapshot', [] );
+		if ( 'published' === $this->status() && is_array( $snapshot ) && ! empty( $snapshot['name'] )
+			&& $this->snapshot_matches( $snapshot, $recommendation ) ) {
+			return $snapshot;
+		}
+
 		return Blueworx_Deck_Builder_Packages::client_view( $recommendation['package'], $this->currency(), $this->alternatives() );
+	}
+
+	/**
+	 * Whether a snapshot is still of the packages this deck asks for.
+	 *
+	 * The snapshot is there to hold a price still: a package repriced after a
+	 * link went out must not change what the client was quoted. It was never
+	 * meant to hold the choice still as well, and it did — changing the
+	 * override, the hours or the comparison list on a published deck left the
+	 * client looking at the packages picked when it was first published, with
+	 * nothing on the screen saying so.
+	 *
+	 * So the snapshot is used only while it is a snapshot of the same
+	 * packages. Change which packages the deck shows and it is recomputed;
+	 * leave them alone and the prices stay exactly as they were sent. A
+	 * snapshot taken before packages carried an id fails this and is
+	 * recomputed once, which is the right answer for it too.
+	 *
+	 * @param array<string,mixed> $snapshot       Stored client view.
+	 * @param array<string,mixed> $recommendation Current recommendation.
+	 * @return bool
+	 */
+	private function snapshot_matches( array $snapshot, array $recommendation ) {
+		if ( (int) ( $snapshot['id'] ?? 0 ) !== (int) $recommendation['package']['id'] ) {
+			return false;
+		}
+
+		$was = array_map( 'intval', wp_list_pluck( (array) ( $snapshot['alternatives'] ?? [] ), 'id' ) );
+		$now = array_values( array_diff( $this->alternatives(), [ (int) $recommendation['package']['id'] ] ) );
+
+		sort( $was );
+		sort( $now );
+
+		return $was === $now;
 	}
 
 	/**

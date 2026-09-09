@@ -378,3 +378,43 @@ test('the estimate slide gives both totals, and every total says hours', async (
 
   await guest.close();
 });
+
+test('changing the recommendation on a published deck reaches the client', async ({
+  page,
+  browser,
+}) => {
+  const id = await createDeck(page, { client: 'Thornbury Legal', title: 'Firm site' });
+  await publish(page, 'Thornbury Legal');
+  const link = await linkFor(page, id);
+
+  const guest = await browser.newContext({ storageState: undefined });
+  const guestPage = await guest.newPage();
+  await guestPage.goto(link);
+
+  const recommended = guestPage.locator('.bwd-pkg--main');
+  const before = await recommended.innerText();
+
+  // Override the recommendation to a different package. The client view was
+  // frozen at publish and never looked at again, so this change used to stop
+  // at the editor: the deck went on showing whatever was picked the day it
+  // was published, with nothing saying so.
+  await openEditor(page, id, 'Support package');
+  const options = await page.locator('#override option').evaluateAll((els) =>
+    els.map((el) => ({ value: el.value, label: el.textContent.trim(), selected: el.selected }))
+  );
+  const current = options.find((o) => o.selected);
+  // A package that is neither "use the automatic recommendation" nor the one
+  // already showing, so the save has something to save and the deck has
+  // something to change to.
+  const other = options.find(
+    (o) => o.value !== '0' && o.value !== current.value && !before.includes(o.label.split(' · ')[0])
+  );
+  await page.selectOption('#override', other.value);
+  await save(page);
+
+  await guestPage.reload();
+  await expect(recommended).toContainText(other.label.split(' · ')[0]);
+  expect(await recommended.innerText()).not.toBe(before);
+
+  await guest.close();
+});

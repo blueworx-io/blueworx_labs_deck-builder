@@ -8,6 +8,14 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [0.14.0] - 2026-09-09
 
+### Fixed
+
+- Changing which support package a published deck recommends now reaches the
+  client. The deck froze what the client sees when it was published, to stop a
+  repriced package changing a quote already sent — but it froze the choice as
+  well, so a new override, a change of hours or a different comparison list
+  stopped at the editor. Prices stay frozen; the choice does not.
+
 ### Changed
 
 - The client logo is off the cover and off the What we do slide. The client
