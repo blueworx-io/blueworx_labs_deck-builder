@@ -319,7 +319,7 @@ final class Blueworx_Deck_Builder_Render {
 	 * @param array<string,mixed> $payload Client payload.
 	 * @return void
 	 */
-	private static function pillars( array $section, array $payload ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	private static function pillars( array $section, array $payload ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$points = self::lines( $section['points'] );
 		if ( ! $points ) {
 			$points = [
