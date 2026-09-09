@@ -6,6 +6,15 @@ All notable changes to this plugin are recorded here. The format is
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-09
+
+### Changed
+
+- Any deck can be deleted now, not only one that has been archived first.
+  Archiving a deck made by mistake just to be allowed to throw it away was
+  busywork. Delete still asks before it does anything, and on a published deck
+  it says outright that anyone holding the client link will find nothing there.
+
 ## [0.12.0] - 2026-09-08
 
 ### Changed
